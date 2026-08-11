@@ -1,0 +1,11 @@
+add_executable(sandbox
+	src/main.cpp
+)
+
+target_link_libraries(sandbox PRIVATE danmaku_engine)
+
+add_custom_command(TARGET sandbox POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy_directory
+		${CMAKE_CURRENT_SOURCE_DIR}/assets
+		$<TARGET_FILE_DIR:sandbox>/assets
+)
