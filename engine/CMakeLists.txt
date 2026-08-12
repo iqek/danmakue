@@ -6,14 +6,21 @@ add_library(danmaku_engine STATIC
 	src/render/Shader.cpp
 	src/render/Texture.cpp
 	src/render/TextureLibrary.cpp
+	src/render/Font.cpp
 	src/render/Renderer2D.cpp
 	src/render/RenderSystem.cpp
 	src/scene/CollisionSystem.cpp
+	src/ui/Hud.cpp
 	src/danmaku/BulletPool.cpp
 	src/danmaku/RadialBurstEmitter.cpp
 	src/danmaku/SpiralEmitter.cpp
 	src/danmaku/AimedShotEmitter.cpp
 	src/danmaku/RandomScatterEmitter.cpp
+	src/danmaku/StraightShotEmitter.cpp
+	src/danmaku/LinearMovement.cpp
+	src/danmaku/WaypointMovement.cpp
+	src/danmaku/EnemySystem.cpp
+	src/danmaku/PlayerSystem.cpp
 )
 
 target_include_directories(danmaku_engine PUBLIC include)
@@ -31,6 +38,7 @@ target_link_libraries(danmaku_engine PUBLIC
 	spdlog::spdlog
 	glad
 	stb_image
+	stb_truetype
 )
 
 if(WIN32)

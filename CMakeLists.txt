@@ -11,5 +11,6 @@ endif()
 
 add_subdirectory(thirdparty/glad)
 add_subdirectory(thirdparty/stb_image)
+add_subdirectory(thirdparty/stb_truetype)
 add_subdirectory(engine)
 add_subdirectory(sandbox)

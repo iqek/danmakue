@@ -6,19 +6,18 @@
 
 namespace Engine {
 
-// fires one bullet straight at targetPosition every interval
+// Fires one bullet straight at targetPosition every interval seconds.
 class AimedShotEmitter : public BulletEmitter {
 private:
-	glm::vec2 origin;
 	float bulletSpeed;
 	float interval;
 	glm::vec4 color;
 	float timer = 0.0f;
 
 public:
-	AimedShotEmitter(glm::vec2 origin, float bulletSpeed, float interval, glm::vec4 color);
+	AimedShotEmitter(float bulletSpeed, float interval, glm::vec4 color);
 
-	void Update(float deltaTime, BulletPool& bulletPool, glm::vec2 targetPosition) override;
+	void Update(float deltaTime, BulletPool& bulletPool, glm::vec2 originPosition, glm::vec2 targetPosition) override;
 };
 
 }

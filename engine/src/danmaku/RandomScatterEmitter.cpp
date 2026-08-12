@@ -6,15 +6,15 @@
 
 namespace Engine {
 
-RandomScatterEmitter::RandomScatterEmitter(glm::vec2 origin, float minSpeed, float maxSpeed, float spawnInterval, glm::vec4 color):
-	origin(origin), spawnInterval(spawnInterval), color(color),
+RandomScatterEmitter::RandomScatterEmitter(float minSpeed, float maxSpeed, float spawnInterval, glm::vec4 color):
+	spawnInterval(spawnInterval), color(color),
 	randomEngine(std::random_device{}()),
 	angleDist(0.0f, glm::two_pi<float>()),
 	speedDist(minSpeed, maxSpeed)
 {
 }
 
-void RandomScatterEmitter::Update(float deltaTime, BulletPool& bulletPool, glm::vec2 targetPosition){
+void RandomScatterEmitter::Update(float deltaTime, BulletPool& bulletPool, glm::vec2 originPosition, glm::vec2 targetPosition){
 	timer -= deltaTime;
 	if(timer > 0.0f){
 		return;
@@ -24,7 +24,7 @@ void RandomScatterEmitter::Update(float deltaTime, BulletPool& bulletPool, glm::
 	float angle = angleDist(randomEngine);
 	float speed = speedDist(randomEngine);
 	glm::vec2 direction(std::cos(angle), std::sin(angle));
-	bulletPool.Spawn(origin, direction * speed, 4.0f, color);
+	bulletPool.Spawn(originPosition, direction * speed, 4.0f, color);
 }
 
 }

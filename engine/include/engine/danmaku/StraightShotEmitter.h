@@ -6,18 +6,18 @@
 
 namespace Engine {
 
-// Spawns bulletCount bullets evenly spaced around a full circle, all at
-// once, repeating every interval seconds.
-class RadialBurstEmitter : public BulletEmitter {
+// Fires one bullet in a fixed direction every interval seconds - the
+// simplest possible pattern, and the natural default for a player's own shot.
+class StraightShotEmitter : public BulletEmitter {
 private:
-	int bulletCount;
+	glm::vec2 direction;
 	float bulletSpeed;
 	float interval;
 	glm::vec4 color;
 	float timer = 0.0f;
 
 public:
-	RadialBurstEmitter(int bulletCount, float bulletSpeed, float interval, glm::vec4 color);
+	StraightShotEmitter(glm::vec2 direction, float bulletSpeed, float interval, glm::vec4 color);
 
 	void Update(float deltaTime, BulletPool& bulletPool, glm::vec2 originPosition, glm::vec2 targetPosition) override;
 };

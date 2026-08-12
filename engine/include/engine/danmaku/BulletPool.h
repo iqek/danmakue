@@ -30,6 +30,16 @@ public:
 	void Spawn(glm::vec2 position, glm::vec2 velocity, float radius, glm::vec4 color);
 	void Update(float deltaTime);
 	void Draw(const Renderer2D& renderer) const;
+
+	// AABB overlap test against every active bullet - used for bullet-vs-player
+	// collision, since bullets aren't EnTT entities and can't go through
+	// CollisionSystem/FindCollisions. Leaves the bullets untouched.
+	bool CheckCollision(glm::vec2 boxCenter, glm::vec2 boxSize) const;
+
+	// Same overlap test, but deactivates every bullet that hit - used for
+	// bullet-vs-enemy collision, where a bullet should be consumed on impact
+	// instead of dealing damage every frame it happens to still be overlapping.
+	bool ConsumeCollisions(glm::vec2 boxCenter, glm::vec2 boxSize);
 };
 
 }

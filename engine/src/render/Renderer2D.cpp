@@ -1,4 +1,5 @@
 #include "engine/render/Renderer2D.h"
+#include "engine/render/Font.h"
 
 #include <glad/glad.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -37,11 +38,12 @@ layout(location = 1) in vec2 aUV;
 
 uniform mat4 uViewProjection;
 uniform mat4 uModel;
+uniform vec4 uUVRect;
 
 out vec2 vUV;
 
 void main(){
-	vUV = aUV;
+	vUV = mix(uUVRect.xy, uUVRect.zw, aUV);
 	gl_Position = uViewProjection * uModel * vec4(aPosition, 0.0, 1.0);
 }
 )";
@@ -65,7 +67,7 @@ Renderer2D::Renderer2D(int viewportWidth, int viewportHeight):
 	colorShader(colorVertexSource, colorFragmentSource),
 	textureShader(textureVertexSource, textureFragmentSource)
 {
-	// each vertex is position.xy + uv.xy 
+	// each vertex is position.xy + uv.xy
 	// the color shader only reads location 0, the texture shader reads both
 	float vertices[] = {
 		-0.5f, -0.5f,   0.0f, 0.0f,
@@ -123,12 +125,17 @@ void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size, cons
 }
 
 void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size, const Texture& texture, const glm::vec4& tint) const{
+	DrawQuadUV(position, size, texture, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f), tint);
+}
+
+void Renderer2D::DrawQuadUV(const glm::vec2& position, const glm::vec2& size, const Texture& texture, const glm::vec4& uvRect, const glm::vec4& tint) const{
 	glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(position, 0.0f));
 	model = glm::scale(model, glm::vec3(size, 1.0f));
 
 	textureShader.Bind();
 	textureShader.SetMat4("uViewProjection", viewProjection);
 	textureShader.SetMat4("uModel", model);
+	textureShader.SetVec4("uUVRect", uvRect);
 	textureShader.SetVec4("uTint", tint);
 	textureShader.SetInt("uTexture", 0);
 
@@ -136,6 +143,24 @@ void Renderer2D::DrawQuad(const glm::vec2& position, const glm::vec2& size, cons
 
 	glBindVertexArray(vao);
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+}
+
+void Renderer2D::DrawText(const glm::vec2& position, const std::string& text, const Font& font, const glm::vec4& color) const{
+	glm::vec2 cursor = position;
+
+	for(char c : text){
+		if(c == '\n'){
+			cursor.x = position.x;
+			cursor.y += font.GetLineHeight();
+			continue;
+		}
+
+		const Glyph& glyph = font.GetGlyph(c);
+		glm::vec2 glyphCenter = cursor + glyph.offset + glyph.size * 0.5f;
+		DrawQuadUV(glyphCenter, glyph.size, font.GetAtlas(), glyph.uvRect, color);
+
+		cursor.x += glyph.advance;
+	}
 }
 
 }

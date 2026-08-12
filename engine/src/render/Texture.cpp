@@ -16,20 +16,41 @@ Texture::Texture(const std::string& path){
 		return;
 	}
 
+	Upload(pixels, 4);
+	stbi_image_free(pixels);
+
+	ENGINE_CORE_INFO("Loaded texture: {} ({}x{})", path, width, height);
+}
+
+Texture::Texture(const unsigned char* pixels, int width, int height, int channels):
+	width(width), height(height)
+{
+	Upload(pixels, channels);
+}
+
+void Texture::Upload(const unsigned char* pixels, int channels){
+	unsigned int format = channels == 1 ? GL_RED : GL_RGBA;
+	unsigned int internalFormat = channels == 1 ? GL_R8 : GL_RGBA8;
+
 	glGenTextures(1, &textureId);
 	glBindTexture(GL_TEXTURE_2D, textureId);
 
-	// (nearest filtering keeps pixel-art sprites crisp instead of blurring them.)
+	// Nearest filtering keeps pixel-art sprites (and font glyphs) crisp
+	// instead of blurring them.
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+	if(channels == 1){
+		// A single-channel texture (e.g. a font atlas) only has red populated.
+		// Swizzling all four channels to read from red means the existing
+		// tint-multiply shader "just works": color = tint, alpha = coverage.
+		int swizzle[] = { GL_RED, GL_RED, GL_RED, GL_RED };
+		glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzle);
+	}
 
-	stbi_image_free(pixels);
-
-	ENGINE_CORE_INFO("Loaded texture: {} ({}x{})", path, width, height);
+	glTexImage2D(GL_TEXTURE_2D, 0, static_cast<int>(internalFormat), width, height, 0, format, GL_UNSIGNED_BYTE, pixels);
 }
 
 Texture::~Texture(){

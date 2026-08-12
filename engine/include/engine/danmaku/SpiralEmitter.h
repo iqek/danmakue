@@ -6,11 +6,11 @@
 
 namespace Engine {
 
-// spawns one bullet at a steadily rotating angle every interval
-// each new bullet is offset from the last, so the stream traces a spiral outward
+// Spawns one bullet (or one per arm) at a steadily rotating angle every
+// spawnInterval seconds - each new bullet is offset from the last, so the
+// stream traces a spiral outward as they all fly off at constant speed.
 class SpiralEmitter : public BulletEmitter {
 private:
-	glm::vec2 origin;
 	float bulletSpeed;
 	float spawnInterval;
 	float angularVelocity;
@@ -20,9 +20,9 @@ private:
 	float currentAngle = 0.0f;
 
 public:
-	SpiralEmitter(glm::vec2 origin, float bulletSpeed, float spawnInterval, float angularVelocity, int arms, glm::vec4 color);
+	SpiralEmitter(float bulletSpeed, float spawnInterval, float angularVelocity, int arms, glm::vec4 color);
 
-	void Update(float deltaTime, BulletPool& bulletPool, glm::vec2 targetPosition) override;
+	void Update(float deltaTime, BulletPool& bulletPool, glm::vec2 originPosition, glm::vec2 targetPosition) override;
 };
 
 }

@@ -6,12 +6,12 @@
 
 namespace Engine {
 
-SpiralEmitter::SpiralEmitter(glm::vec2 origin, float bulletSpeed, float spawnInterval, float angularVelocity, int arms, glm::vec4 color):
-	origin(origin), bulletSpeed(bulletSpeed), spawnInterval(spawnInterval), angularVelocity(angularVelocity), arms(arms), color(color)
+SpiralEmitter::SpiralEmitter(float bulletSpeed, float spawnInterval, float angularVelocity, int arms, glm::vec4 color):
+	bulletSpeed(bulletSpeed), spawnInterval(spawnInterval), angularVelocity(angularVelocity), arms(arms), color(color)
 {
 }
 
-void SpiralEmitter::Update(float deltaTime, BulletPool& bulletPool, glm::vec2 targetPosition){
+void SpiralEmitter::Update(float deltaTime, BulletPool& bulletPool, glm::vec2 originPosition, glm::vec2 targetPosition){
 	currentAngle += angularVelocity * deltaTime;
 
 	spawnTimer -= deltaTime;
@@ -24,7 +24,7 @@ void SpiralEmitter::Update(float deltaTime, BulletPool& bulletPool, glm::vec2 ta
 	for(int i = 0; i < arms; i++){
 		float angle = currentAngle + armStep * static_cast<float>(i);
 		glm::vec2 direction(std::cos(angle), std::sin(angle));
-		bulletPool.Spawn(origin, direction * bulletSpeed, 5.0f, color);
+		bulletPool.Spawn(originPosition, direction * bulletSpeed, 5.0f, color);
 	}
 }
 

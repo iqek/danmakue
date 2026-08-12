@@ -6,12 +6,12 @@
 
 namespace Engine {
 
-RadialBurstEmitter::RadialBurstEmitter(glm::vec2 origin, int bulletCount, float bulletSpeed, float interval, glm::vec4 color):
-	origin(origin), bulletCount(bulletCount), bulletSpeed(bulletSpeed), interval(interval), color(color)
+RadialBurstEmitter::RadialBurstEmitter(int bulletCount, float bulletSpeed, float interval, glm::vec4 color):
+	bulletCount(bulletCount), bulletSpeed(bulletSpeed), interval(interval), color(color)
 {
 }
 
-void RadialBurstEmitter::Update(float deltaTime, BulletPool& bulletPool, glm::vec2 targetPosition){
+void RadialBurstEmitter::Update(float deltaTime, BulletPool& bulletPool, glm::vec2 originPosition, glm::vec2 targetPosition){
 	timer -= deltaTime;
 	if(timer > 0.0f){
 		return;
@@ -22,7 +22,7 @@ void RadialBurstEmitter::Update(float deltaTime, BulletPool& bulletPool, glm::ve
 	for(int i = 0; i < bulletCount; i++){
 		float angle = angleStep * static_cast<float>(i);
 		glm::vec2 direction(std::cos(angle), std::sin(angle));
-		bulletPool.Spawn(origin, direction * bulletSpeed, 5.0f, color);
+		bulletPool.Spawn(originPosition, direction * bulletSpeed, 5.0f, color);
 	}
 }
 
