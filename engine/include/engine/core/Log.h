@@ -5,8 +5,7 @@
 
 namespace Engine {
 
-// engine code logs through the core logger,
-// sandbox/editor/game code logs through the client logger
+// Engine code uses the core logger, everything else uses the client logger
 class Log {
 private:
 	static std::shared_ptr<spdlog::logger> coreLogger;

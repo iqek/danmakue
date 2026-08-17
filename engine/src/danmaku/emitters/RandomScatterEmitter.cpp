@@ -1,4 +1,4 @@
-#include "engine/danmaku/RandomScatterEmitter.h"
+#include "engine/danmaku/emitters/RandomScatterEmitter.h"
 #include "engine/danmaku/BulletPool.h"
 
 #include <cmath>
@@ -6,8 +6,8 @@
 
 namespace Engine {
 
-RandomScatterEmitter::RandomScatterEmitter(float minSpeed, float maxSpeed, float spawnInterval, glm::vec4 color):
-	spawnInterval(spawnInterval), color(color),
+RandomScatterEmitter::RandomScatterEmitter(float minSpeed, float maxSpeed, float spawnInterval, glm::vec4 color, float outwardAcceleration):
+	spawnInterval(spawnInterval), color(color), outwardAcceleration(outwardAcceleration),
 	randomEngine(std::random_device{}()),
 	angleDist(0.0f, glm::two_pi<float>()),
 	speedDist(minSpeed, maxSpeed)
@@ -24,7 +24,7 @@ void RandomScatterEmitter::Update(float deltaTime, BulletPool& bulletPool, glm::
 	float angle = angleDist(randomEngine);
 	float speed = speedDist(randomEngine);
 	glm::vec2 direction(std::cos(angle), std::sin(angle));
-	bulletPool.Spawn(originPosition, direction * speed, 4.0f, color);
+	bulletPool.Spawn(originPosition, direction * speed, 4.0f, color, direction * outwardAcceleration);
 }
 
 }

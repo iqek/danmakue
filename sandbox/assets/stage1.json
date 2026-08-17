@@ -1,0 +1,41 @@
+{
+	"enemies": [
+		{
+			"trigger": { "type": "time", "seconds": 1.0 },
+			"position": [400, -50],
+			"size": [40, 40],
+			"colliderSize": [36, 36],
+			"color": [0.75, 0.55, 1.0, 1.0],
+			"health": 50,
+			"movement": {
+				"type": "waypoint",
+				"speed": 150,
+				"waypoints": [
+					{ "position": [400, 150], "waitTime": 2.0 },
+					{ "position": [700, 250], "waitTime": 2.0 },
+					{ "position": [300, 300], "waitTime": 2.0 }
+				]
+			},
+			"emitters": [
+				{ "type": "radialBurst", "bulletCount": 16, "bulletSpeed": 120, "interval": 2.0, "color": [0.75, 0.55, 1.0, 1.0] },
+				{ "type": "spiral", "bulletSpeed": 150, "spawnInterval": 0.04, "angularVelocity": 2.5, "arms": 2, "color": [0.5, 0.95, 0.85, 1.0] }
+			]
+		},
+		{
+			"trigger": { "type": "afterCleared" },
+			"position": [-50, 500],
+			"size": [40, 40],
+			"colliderSize": [36, 36],
+			"color": [1.0, 0.85, 0.5, 1.0],
+			"health": 50,
+			"movement": {
+				"type": "linear",
+				"velocity": [150, 0]
+			},
+			"emitters": [
+				{ "type": "aimedShot", "bulletSpeed": 200, "interval": 0.6, "color": [1.0, 0.85, 0.5, 1.0], "homingStrength": 1.5 },
+				{ "type": "randomScatter", "minSpeed": 60, "maxSpeed": 180, "spawnInterval": 0.05, "color": [1.0, 0.65, 0.85, 1.0], "outwardAcceleration": 60.0 }
+			]
+		}
+	]
+}

@@ -2,12 +2,11 @@
 
 #include <glm/glm.hpp>
 
-#include "engine/danmaku/BulletEmitter.h"
+#include "engine/danmaku/emitters/BulletEmitter.h"
 
 namespace Engine {
 
-// Fires one bullet in a fixed direction every interval seconds - the
-// simplest possible pattern, and the natural default for a player's own shot.
+// Fires in a fixed direction every interval. the default player shot
 class StraightShotEmitter : public BulletEmitter {
 private:
 	glm::vec2 direction;

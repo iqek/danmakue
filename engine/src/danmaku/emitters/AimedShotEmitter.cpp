@@ -1,10 +1,10 @@
-#include "engine/danmaku/AimedShotEmitter.h"
+#include "engine/danmaku/emitters/AimedShotEmitter.h"
 #include "engine/danmaku/BulletPool.h"
 
 namespace Engine {
 
-AimedShotEmitter::AimedShotEmitter(float bulletSpeed, float interval, glm::vec4 color):
-	bulletSpeed(bulletSpeed), interval(interval), color(color)
+AimedShotEmitter::AimedShotEmitter(float bulletSpeed, float interval, glm::vec4 color, float homingStrength):
+	bulletSpeed(bulletSpeed), interval(interval), color(color), homingStrength(homingStrength)
 {
 }
 
@@ -21,7 +21,7 @@ void AimedShotEmitter::Update(float deltaTime, BulletPool& bulletPool, glm::vec2
 	}
 
 	glm::vec2 direction = glm::normalize(toTarget);
-	bulletPool.Spawn(originPosition, direction * bulletSpeed, 5.0f, color);
+	bulletPool.Spawn(originPosition, direction * bulletSpeed, 5.0f, color, glm::vec2(0.0f), homingStrength);
 }
 
 }

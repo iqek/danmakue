@@ -7,8 +7,7 @@
 namespace Engine {
 
 Texture::Texture(const std::string& path){
-	// No vertical flip here - our mesh UVs already assume the image's natural
-	// row order (top row first), matching our y-down screen convention.
+	// No vertical flip: our mesh UVs already assume top row first
 	int channels = 0;
 	unsigned char* pixels = stbi_load(path.c_str(), &width, &height, &channels, 4);
 	if(!pixels){
@@ -35,17 +34,14 @@ void Texture::Upload(const unsigned char* pixels, int channels){
 	glGenTextures(1, &textureId);
 	glBindTexture(GL_TEXTURE_2D, textureId);
 
-	// Nearest filtering keeps pixel-art sprites (and font glyphs) crisp
-	// instead of blurring them.
+	// Nearest filtering keeps pixel art and glyphs crisp, not blurry
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 	if(channels == 1){
-		// A single-channel texture (e.g. a font atlas) only has red populated.
-		// Swizzling all four channels to read from red means the existing
-		// tint-multiply shader "just works": color = tint, alpha = coverage.
+		// Swizzle red into all channels so the tint-multiply shader still works
 		int swizzle[] = { GL_RED, GL_RED, GL_RED, GL_RED };
 		glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzle);
 	}

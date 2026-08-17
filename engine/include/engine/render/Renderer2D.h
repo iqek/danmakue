@@ -10,10 +10,7 @@ namespace Engine {
 
 class Font;
 
-// Draws 2D quads (solid-color or textured) and text, with an orthographic
-// projection matching the window's pixel size (origin top-left, y grows
-// downward). One draw call per quad/glyph for now - batching thousands of
-// bullets in one call is a later task.
+// Draws 2D quads and text, one draw call each. batching is a later task
 class Renderer2D {
 private:
 	unsigned int vao = 0;
@@ -34,8 +31,7 @@ public:
 	void DrawQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec4& color) const;
 	void DrawQuad(const glm::vec2& position, const glm::vec2& size, const Texture& texture, const glm::vec4& tint = glm::vec4(1.0f)) const;
 
-	// Draws texture's uvRect (uMin, vMin, uMax, vMax) sub-region instead of
-	// the whole texture - what glyphs/sprite sheets need.
+	// Draws only texture's uvRect sub-region, e.g. for glyphs or sprite sheets
 	void DrawQuadUV(const glm::vec2& position, const glm::vec2& size, const Texture& texture, const glm::vec4& uvRect, const glm::vec4& tint = glm::vec4(1.0f)) const;
 
 	void DrawText(const glm::vec2& position, const std::string& text, const Font& font, const glm::vec4& color) const;

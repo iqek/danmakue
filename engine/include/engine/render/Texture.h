@@ -16,9 +16,7 @@ private:
 public:
 	explicit Texture(const std::string& path);
 
-	// Builds a texture directly from pixel data already in memory (e.g. a
-	// baked font atlas) instead of loading a file. channels selects the GL
-	// format: 1 = single-channel (GL_RED), 4 = GL_RGBA.
+	// Builds from in-memory pixels instead of a file. channels: 1 = GL_RED, 4 = GL_RGBA
 	Texture(const unsigned char* pixels, int width, int height, int channels);
 
 	~Texture();

@@ -15,22 +15,23 @@ BulletPool::BulletPool(std::size_t capacity, glm::vec2 boundsMin, glm::vec2 boun
 	bullets.resize(capacity);
 }
 
-void BulletPool::Spawn(glm::vec2 position, glm::vec2 velocity, float radius, glm::vec4 color){
+void BulletPool::Spawn(glm::vec2 position, glm::vec2 velocity, float radius, glm::vec4 color, glm::vec2 acceleration, float homingStrength){
 	for(auto& bullet : bullets){
 		if(!bullet.active){
 			bullet.position = position;
 			bullet.velocity = velocity;
+			bullet.acceleration = acceleration;
 			bullet.radius = radius;
 			bullet.color = color;
+			bullet.homingStrength = homingStrength;
 			bullet.active = true;
 			return;
 		}
 	}
-	// Pool is full - bullet is silently dropped.
-	// (a hard cap on simultaneous bullets is normal, not just a missing feature.)
+	// Pool full: bullet silently dropped, a hard cap is intentional here
 }
 
-void BulletPool::Update(float deltaTime){
+void BulletPool::Update(float deltaTime, glm::vec2 targetPosition){
 	glm::vec2 min = boundsMin - glm::vec2(despawnMargin);
 	glm::vec2 max = boundsMax + glm::vec2(despawnMargin);
 
@@ -39,6 +40,20 @@ void BulletPool::Update(float deltaTime){
 			continue;
 		}
 
+		if(bullet.homingStrength > 0.0f){
+			glm::vec2 toTarget = targetPosition - bullet.position;
+			float distanceToTarget = glm::length(toTarget);
+			float speed = glm::length(bullet.velocity);
+			if(distanceToTarget > 0.0001f && speed > 0.0001f){
+				glm::vec2 desiredDirection = toTarget / distanceToTarget;
+				glm::vec2 currentDirection = bullet.velocity / speed;
+				float turnAmount = glm::clamp(bullet.homingStrength * deltaTime, 0.0f, 1.0f);
+				glm::vec2 turnedDirection = glm::normalize(glm::mix(currentDirection, desiredDirection, turnAmount));
+				bullet.velocity = turnedDirection * speed;
+			}
+		}
+
+		bullet.velocity += bullet.acceleration * deltaTime;
 		bullet.position += bullet.velocity * deltaTime;
 
 		bool outOfBounds = bullet.position.x < min.x || bullet.position.x > max.x || bullet.position.y < min.y || bullet.position.y > max.y;

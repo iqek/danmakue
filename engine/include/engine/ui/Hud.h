@@ -21,9 +21,7 @@ struct HudElement {
 	glm::vec2 position{ 0.0f, 0.0f };
 };
 
-// A small, swappable list of stat readouts drawn each frame - the default
-// HUD is just one particular list of elements. Adding a new stat later means
-// adding one HudStat value and one case in Draw(), not redesigning this class.
+// A swappable list of stat readouts. the default HUD is just one such list
 class Hud {
 private:
 	std::vector<HudElement> elements;

@@ -8,6 +8,12 @@
 
 namespace Engine {
 
+namespace {
+
+constexpr float despawnMargin = 100.0f;
+
+}
+
 void UpdateEnemies(entt::registry& registry, BulletPool& bulletPool, float deltaTime, glm::vec2 targetPosition){
 	auto view = registry.view<Transform, Enemy>();
 	for(auto entity : view){
@@ -27,8 +33,7 @@ void UpdateEnemies(entt::registry& registry, BulletPool& bulletPool, float delta
 void UpdateEnemyHealth(entt::registry& registry, BulletPool& playerBulletPool, int damagePerHit, entt::entity player, int scorePerKill){
 	auto view = registry.view<Transform, Collider, Enemy>();
 
-	// Entities can't be safely destroyed mid-iteration of a view over their
-	// own component types, so collect the dead ones and destroy them after.
+	// Can't destroy entities mid-view-iteration, so collect them and destroy after
 	std::vector<entt::entity> toDestroy;
 	for(auto entity : view){
 		auto& transform = view.get<Transform>(entity);
@@ -45,6 +50,26 @@ void UpdateEnemyHealth(entt::registry& registry, BulletPool& playerBulletPool, i
 
 	if(!toDestroy.empty()){
 		registry.get<Player>(player).score += scorePerKill * static_cast<int>(toDestroy.size());
+	}
+
+	for(auto entity : toDestroy){
+		registry.destroy(entity);
+	}
+}
+
+void DespawnOffscreenEnemies(entt::registry& registry, glm::vec2 boundsMin, glm::vec2 boundsMax){
+	glm::vec2 min = boundsMin - glm::vec2(despawnMargin);
+	glm::vec2 max = boundsMax + glm::vec2(despawnMargin);
+
+	auto view = registry.view<Transform, Enemy>();
+
+	std::vector<entt::entity> toDestroy;
+	for(auto entity : view){
+		auto& transform = view.get<Transform>(entity);
+		bool outOfBounds = transform.position.x < min.x || transform.position.x > max.x || transform.position.y < min.y || transform.position.y > max.y;
+		if(outOfBounds){
+			toDestroy.push_back(entity);
+		}
 	}
 
 	for(auto entity : toDestroy){

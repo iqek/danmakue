@@ -1,4 +1,4 @@
-#include "engine/danmaku/WaypointMovement.h"
+#include "engine/danmaku/movement/WaypointMovement.h"
 #include "engine/scene/Components.h"
 
 namespace Engine {

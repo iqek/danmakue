@@ -4,7 +4,7 @@
 #include <glm/glm.hpp>
 #include <vector>
 
-#include "engine/danmaku/MovementPattern.h"
+#include "engine/danmaku/movement/MovementPattern.h"
 
 namespace Engine {
 
@@ -13,9 +13,7 @@ struct Waypoint {
 	float waitTime = 0.0f;
 };
 
-// Moves toward each waypoint in turn at a constant speed, pausing for that
-// waypoint's waitTime once reached before continuing to the next one, and
-// holds position at the last one indefinitely once the path is complete.
+// Moves through each waypoint in turn, pausing waitTime at each one
 class WaypointMovement : public MovementPattern {
 private:
 	std::vector<Waypoint> waypoints;

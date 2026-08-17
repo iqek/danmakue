@@ -3,13 +3,11 @@
 #include <memory>
 #include <vector>
 
-#include "engine/danmaku/BulletEmitter.h"
+#include "engine/danmaku/emitters/BulletEmitter.h"
 
 namespace Engine {
 
-// weapons is deliberately a list, not one fixed emitter - some games give
-// the player several simultaneous shot types, and some player characters
-// (or entire games) might have no attached weapon at all.
+// weapons is a list, not a fixed emitter
 struct Player {
 	int lives = 3;
 	int score = 0;

@@ -1,4 +1,4 @@
-#include "engine/danmaku/StraightShotEmitter.h"
+#include "engine/danmaku/emitters/StraightShotEmitter.h"
 #include "engine/danmaku/BulletPool.h"
 
 namespace Engine {

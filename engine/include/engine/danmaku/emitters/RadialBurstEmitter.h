@@ -2,12 +2,11 @@
 
 #include <glm/glm.hpp>
 
-#include "engine/danmaku/BulletEmitter.h"
+#include "engine/danmaku/emitters/BulletEmitter.h"
 
 namespace Engine {
 
-// Spawns bulletCount bullets evenly spaced around a full circle, all at
-// once, repeating every interval seconds.
+// Spawns bulletCount bullets in a ring at once, repeating every interval
 class RadialBurstEmitter : public BulletEmitter {
 private:
 	int bulletCount;

@@ -2,8 +2,7 @@
 
 namespace Engine {
 
-// Tracks per-frame delta time and total elapsed time. 
-// call Update() once per frame (before anything that reads GetDeltaTime()/GetElapsedTime() that frame)
+// Call Update() once per frame, before reading GetDeltaTime()/GetElapsedTime()
 class Time {
 private:
 	static double lastFrameTime;

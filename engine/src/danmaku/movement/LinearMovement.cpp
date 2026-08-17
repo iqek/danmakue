@@ -1,4 +1,4 @@
-#include "engine/danmaku/LinearMovement.h"
+#include "engine/danmaku/movement/LinearMovement.h"
 #include "engine/scene/Components.h"
 
 namespace Engine {

@@ -1,4 +1,4 @@
-#include "engine/danmaku/RadialBurstEmitter.h"
+#include "engine/danmaku/emitters/RadialBurstEmitter.h"
 #include "engine/danmaku/BulletPool.h"
 
 #include <cmath>

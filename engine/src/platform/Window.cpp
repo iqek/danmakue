@@ -28,8 +28,7 @@ Window::Window(const WindowProps& props): width(props.width), height(props.heigh
 	}
 	windowCount++;
 
-	// OpenGL 4.1 core is the ceiling on macOS, so that's the ceiling everywhere
-	// keeping one code path instead of per-platform GL feature branches.
+	// OpenGL 4.1 core is macOS's ceiling, so it's the ceiling everywhere
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);

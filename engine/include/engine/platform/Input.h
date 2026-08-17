@@ -17,8 +17,7 @@ enum class Key : int {
 	Escape = GLFW_KEY_ESCAPE,
 };
 
-// Polls key state for the current window. 
-// Init() must be called once after a Window exists, before any IsKeyPressed() calls.
+// Polls key state. Init() must run once, after a Window exists
 class Input {
 private:
 	static GLFWwindow* windowHandle;

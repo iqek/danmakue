@@ -8,8 +8,7 @@
 
 namespace Engine {
 
-// Loads each texture file once and hands out shared ownership of it
-// so the same image isn't loaded to the GPU twice
+// Loads each texture once, so the same image never hits the GPU twice
 class TextureLibrary {
 private:
 	static std::unordered_map<std::string, std::shared_ptr<Texture>> textures;

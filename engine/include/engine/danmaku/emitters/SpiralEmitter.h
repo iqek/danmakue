@@ -2,13 +2,11 @@
 
 #include <glm/glm.hpp>
 
-#include "engine/danmaku/BulletEmitter.h"
+#include "engine/danmaku/emitters/BulletEmitter.h"
 
 namespace Engine {
 
-// Spawns one bullet (or one per arm) at a steadily rotating angle every
-// spawnInterval seconds - each new bullet is offset from the last, so the
-// stream traces a spiral outward as they all fly off at constant speed.
+// Fires at a steadily rotating angle, tracing a spiral outward over time
 class SpiralEmitter : public BulletEmitter {
 private:
 	float bulletSpeed;

@@ -16,8 +16,7 @@ struct Glyph {
 	float advance = 0.0f;      // how far to move the cursor after drawing this glyph
 };
 
-// A baked bitmap font: one atlas texture + per-character glyph metrics for
-// the printable ASCII range, generated once from a .ttf file via stb_truetype.
+// A bitmap font atlas baked from a .ttf via stb_truetype, ASCII only
 class Font {
 private:
 	std::unique_ptr<Texture> atlas;

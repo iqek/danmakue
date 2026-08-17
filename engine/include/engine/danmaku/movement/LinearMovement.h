@@ -2,12 +2,11 @@
 
 #include <glm/glm.hpp>
 
-#include "engine/danmaku/MovementPattern.h"
+#include "engine/danmaku/movement/MovementPattern.h"
 
 namespace Engine {
 
-// Moves at a constant velocity forever - e.g. an enemy flying straight
-// across or down the screen.
+// Moves at a constant velocity forever
 class LinearMovement : public MovementPattern {
 private:
 	glm::vec2 velocity;
