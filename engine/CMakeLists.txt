@@ -7,6 +7,7 @@ add_library(danmaku_engine STATIC
 	src/render/Texture.cpp
 	src/render/TextureLibrary.cpp
 	src/render/Font.cpp
+	src/render/Framebuffer.cpp
 	src/render/Renderer2D.cpp
 	src/render/RenderSystem.cpp
 	src/scene/CollisionSystem.cpp

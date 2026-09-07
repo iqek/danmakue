@@ -27,6 +27,9 @@ public:
 	Renderer2D(const Renderer2D&) = delete;
 	Renderer2D& operator=(const Renderer2D&) = delete;
 
+	// recomputes the projection for a new target size, e.g. a resized viewport panel
+	void Resize(int viewportWidth, int viewportHeight);
+
 	void Clear(const glm::vec4& color) const;
 	void DrawQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec4& color) const;
 	void DrawQuad(const glm::vec2& position, const glm::vec2& size, const Texture& texture, const glm::vec4& tint = glm::vec4(1.0f)) const;
