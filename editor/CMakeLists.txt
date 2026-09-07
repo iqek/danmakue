@@ -8,7 +8,6 @@ add_executable(editor
 	src/EmitterListEditor.cpp
 	src/HierarchyPanel.cpp
 	src/InspectorPanel.cpp
-	src/PanelMaximizer.cpp
 	src/StageDefinition.cpp
 	src/StagePanel.cpp
 	src/TimelinePanel.cpp
