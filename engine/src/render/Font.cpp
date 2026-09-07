@@ -1,5 +1,6 @@
 #include "engine/render/Font.h"
 #include "engine/core/Log.h"
+#include "engine/core/Utf8Path.h"
 
 #include <stb_truetype.h>
 
@@ -16,7 +17,7 @@ constexpr int firstChar = 32;
 constexpr int numChars = 96; // printable ASCII: 32..127
 
 std::vector<unsigned char> ReadFile(const std::string& path){
-	std::ifstream file(path, std::ios::binary | std::ios::ate);
+	std::ifstream file(PathFromUtf8(path), std::ios::binary | std::ios::ate);
 	if(!file){
 		return {};
 	}
@@ -35,6 +36,9 @@ Font::Font(const std::string& ttfPath, float pixelHeight){
 	std::vector<unsigned char> fontData = ReadFile(ttfPath);
 	if(fontData.empty()){
 		ENGINE_CORE_ERROR("Failed to read font file: {}", ttfPath);
+		// atlas must stay non-null - GetAtlas() has no failure mode of its own
+		unsigned char blankPixel = 0;
+		atlas = std::make_unique<Texture>(&blankPixel, 1, 1, 1);
 		return;
 	}
 

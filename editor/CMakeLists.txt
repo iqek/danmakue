@@ -4,10 +4,11 @@ add_executable(editor
 	src/LogSink.cpp
 	src/AssetBrowserPanel.cpp
 	src/DefaultLayout.cpp
+	src/EmbeddedGame.cpp
 	src/EmitterListEditor.cpp
 	src/HierarchyPanel.cpp
 	src/InspectorPanel.cpp
-	src/PlayController.cpp
+	src/PanelMaximizer.cpp
 	src/StageDefinition.cpp
 	src/StagePanel.cpp
 	src/TimelinePanel.cpp
@@ -20,7 +21,3 @@ target_link_libraries(editor PRIVATE imgui::imgui)
 
 # points the asset browser at the real, editable content directory, not a build copy
 target_compile_definitions(editor PRIVATE ASSETS_DIR="${CMAKE_SOURCE_DIR}/sandbox/assets")
-
-# Play launches the actual sandbox executable, so it always has to be built first
-add_dependencies(editor sandbox)
-target_compile_definitions(editor PRIVATE SANDBOX_EXECUTABLE="$<TARGET_FILE:sandbox>")

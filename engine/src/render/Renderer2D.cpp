@@ -100,6 +100,10 @@ Renderer2D::Renderer2D(int viewportWidth, int viewportHeight):
 	viewProjection = glm::ortho(0.0f, static_cast<float>(viewportWidth), static_cast<float>(viewportHeight), 0.0f, -1.0f, 1.0f);
 }
 
+void Renderer2D::Resize(int viewportWidth, int viewportHeight){
+	viewProjection = glm::ortho(0.0f, static_cast<float>(viewportWidth), static_cast<float>(viewportHeight), 0.0f, -1.0f, 1.0f);
+}
+
 Renderer2D::~Renderer2D(){
 	glDeleteBuffers(1, &ebo);
 	glDeleteBuffers(1, &vbo);
