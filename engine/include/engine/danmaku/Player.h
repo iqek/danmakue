@@ -12,6 +12,7 @@ struct Player {
 	int lives = 3;
 	int score = 0;
 	float invincibleTimer = 0.0f;
+	float moveSpeed = 300.0f;
 	std::vector<std::unique_ptr<BulletEmitter>> weapons;
 
 	Player() = default;

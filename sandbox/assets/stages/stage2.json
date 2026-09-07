@@ -1,0 +1,142 @@
+{
+    "enemies": [
+        {
+            "colliderSize": [
+                36.0,
+                36.0
+            ],
+            "color": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+            ],
+            "emitters": [
+                {
+                    "bulletSpeed": 200.0,
+                    "color": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                    ],
+                    "homingStrength": 0.0,
+                    "interval": 0.5,
+                    "type": "aimedShot"
+                }
+            ],
+            "health": 1,
+            "id": "enemy0",
+            "movement": {
+                "type": "linear",
+                "velocity": [
+                    0.0,
+                    0.0
+                ]
+            },
+            "size": [
+                40.0,
+                40.0
+            ]
+        },
+        {
+            "colliderSize": [
+                36.0,
+                36.0
+            ],
+            "color": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+            ],
+            "emitters": [
+                {
+                    "angularVelocity": 2.0,
+                    "arms": 1,
+                    "bulletSpeed": 120.0,
+                    "color": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                    ],
+                    "spawnInterval": 0.05,
+                    "type": "spiral"
+                }
+            ],
+            "health": 1,
+            "id": "enemy1",
+            "movement": {
+                "type": "linear",
+                "velocity": [
+                    0.0,
+                    0.0
+                ]
+            },
+            "size": [
+                40.0,
+                40.0
+            ]
+        }
+    ],
+    "player": {
+        "colliderSize": [
+            30.0,
+            30.0
+        ],
+        "color": [
+            1.0,
+            0.55,
+            0.65,
+            1.0
+        ],
+        "lives": 3,
+        "moveSpeed": 300.0,
+        "position": [
+            640.0,
+            360.0
+        ],
+        "size": [
+            80.0,
+            80.0
+        ],
+        "weapons": [
+            {
+                "bulletCount": 16,
+                "bulletSpeed": 120.0,
+                "color": [
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "interval": 1.0,
+                "type": "radialBurst"
+            }
+        ]
+    },
+    "timeline": [
+        {
+            "position": [
+                0.0,
+                0.0
+            ],
+            "spawn": "enemy0",
+            "trigger": {
+                "seconds": 2.9,
+                "type": "time"
+            }
+        },
+        {
+            "position": [
+                0.0,
+                0.0
+            ],
+            "spawn": "enemy1",
+            "trigger": {
+                "type": "afterCleared"
+            }
+        }
+    ]
+}

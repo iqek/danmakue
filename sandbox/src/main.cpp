@@ -2,7 +2,6 @@
 #include "engine/danmaku/EnemySystem.h"
 #include "engine/danmaku/Player.h"
 #include "engine/danmaku/PlayerSystem.h"
-#include "engine/danmaku/emitters/StraightShotEmitter.h"
 #include "engine/danmaku/stage/Stage.h"
 #include "engine/danmaku/stage/StageLoader.h"
 #include "engine/scene/CollisionSystem.h"
@@ -21,10 +20,15 @@
 #include <entt/entt.hpp>
 #include <glm/glm.hpp>
 #include <memory>
+#include <string>
 
-int main(){
+int main(int argc, char** argv){
 	Engine::Log::Init();
 	ENGINE_INFO("Sandbox started");
+
+	// argv[1], if given, is a bare filename under assets/stages/ (e.g. "stage2.json"),
+	// not a full path - Play passes it this way to avoid non-ASCII paths in argv
+	std::string stageFileName = (argc > 1) ? argv[1] : "stage1.json";
 
 	Engine::Window window;
 	Engine::Input::Init(window.GetHandle());
@@ -37,25 +41,19 @@ int main(){
 
 	entt::registry registry;
 
-	auto player = registry.create();
-	registry.emplace<Engine::Transform>(player, glm::vec2(640.0f, 360.0f), glm::vec2(80.0f, 80.0f));
-	registry.emplace<Engine::Sprite>(player, glm::vec4(1.0f, 0.55f, 0.65f, 1.0f));
-	registry.emplace<Engine::Collider>(player, glm::vec2(30.0f, 30.0f));
-	Engine::Player initialPlayerData;
-	initialPlayerData.weapons.push_back(std::make_unique<Engine::StraightShotEmitter>(glm::vec2(0.0f, -1.0f), 500.0f, 0.12f, glm::vec4(1.0f, 0.55f, 0.65f, 1.0f)));
-	registry.emplace<Engine::Player>(player, std::move(initialPlayerData));
+	std::string stagePath = std::string(ASSETS_DIR) + "/stages/" + stageFileName;
+	auto player = Engine::SpawnPlayer(registry, stagePath);
 
 	auto patchouliEntity = registry.create();
 	registry.emplace<Engine::Transform>(patchouliEntity, glm::vec2(150.0f, 150.0f), glm::vec2(128.0f, 128.0f));
 	registry.emplace<Engine::Sprite>(patchouliEntity, glm::vec4(1.0f), Engine::TextureLibrary::Get("assets/know.png"));
 	registry.emplace<Engine::Collider>(patchouliEntity, glm::vec2(110.0f, 110.0f));
 
-	Engine::Stage stage = Engine::LoadStage("assets/stage1.json");
+	Engine::Stage stage = Engine::LoadStage(stagePath);
 
 	Engine::BulletPool enemyBulletPool(1000, glm::vec2(0.0f, 0.0f), glm::vec2(window.GetWidth(), window.GetHeight()));
 	Engine::BulletPool playerBulletPool(200, glm::vec2(0.0f, 0.0f), glm::vec2(window.GetWidth(), window.GetHeight()));
 
-	float speed = 300.0f;
 	int enemyDamagePerHit = 10;
 	int scorePerKill = 100;
 	bool gameOver = false;
@@ -71,17 +69,18 @@ int main(){
 
 		if(!gameOver){
 			auto& transform = registry.get<Engine::Transform>(player);
+			auto& playerData = registry.get<Engine::Player>(player);
 			if(Engine::Input::IsKeyPressed(Engine::Key::W) || Engine::Input::IsKeyPressed(Engine::Key::Up)){
-				transform.position.y -= speed * dt;
+				transform.position.y -= playerData.moveSpeed * dt;
 			}
 			if(Engine::Input::IsKeyPressed(Engine::Key::S) || Engine::Input::IsKeyPressed(Engine::Key::Down)){
-				transform.position.y += speed * dt;
+				transform.position.y += playerData.moveSpeed * dt;
 			}
 			if(Engine::Input::IsKeyPressed(Engine::Key::A) || Engine::Input::IsKeyPressed(Engine::Key::Left)){
-				transform.position.x -= speed * dt;
+				transform.position.x -= playerData.moveSpeed * dt;
 			}
 			if(Engine::Input::IsKeyPressed(Engine::Key::D) || Engine::Input::IsKeyPressed(Engine::Key::Right)){
-				transform.position.x += speed * dt;
+				transform.position.x += playerData.moveSpeed * dt;
 			}
 
 			bool touching = Engine::CheckCollision(registry, player, patchouliEntity);
@@ -100,7 +99,6 @@ int main(){
 			enemyBulletPool.Update(dt, transform.position);
 			playerBulletPool.Update(dt, transform.position);
 
-			auto& playerData = registry.get<Engine::Player>(player);
 			auto& playerSprite = registry.get<Engine::Sprite>(player);
 			bool blinkOff = playerData.invincibleTimer > 0.0f && std::fmod(playerData.invincibleTimer, 0.2f) < 0.1f;
 			playerSprite.color.a = blinkOff ? 0.3f : 1.0f;

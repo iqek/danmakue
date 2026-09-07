@@ -6,7 +6,11 @@
     "glm",
     "entt",
     "spdlog",
-    "nlohmann-json"
+    "nlohmann-json",
+    {
+      "name": "imgui",
+      "features": [ "docking-experimental", "glfw-binding", "opengl3-binding" ]
+    }
   ],
   "builtin-baseline": "ea1a7396b05637a53bf23c078647ecc0edee4b80"
 }
