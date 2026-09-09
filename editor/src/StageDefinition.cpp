@@ -51,9 +51,16 @@ StageDefinition LoadStageDefinition(const std::string& utf8Path){
 		stage.player.weapons = playerData.value("weapons", Json::array());
 	}
 
+	if(data.contains("phases")){
+		for(const auto& phase : data.at("phases")){
+			stage.phases.push_back(phase.get<std::string>());
+		}
+	}
+
 	for(const auto& enemyData : data.at("enemies")){
 		EnemyDefinition enemy;
 		enemy.id = enemyData.at("id").get<std::string>();
+		enemy.phase = enemyData.value("phase", std::string());
 		enemy.size = ParseVec2(enemyData.at("size"));
 		enemy.colliderSize = enemyData.contains("colliderSize") ? ParseVec2(enemyData.at("colliderSize")) : enemy.size;
 		enemy.color = ParseColor(enemyData.at("color"));
@@ -67,6 +74,7 @@ StageDefinition LoadStageDefinition(const std::string& utf8Path){
 		TimelineEntry timelineEntry;
 		timelineEntry.trigger = entry.at("trigger");
 		timelineEntry.spawnId = entry.at("spawn").get<std::string>();
+		timelineEntry.phase = entry.value("phase", std::string());
 		timelineEntry.position = ParseVec2(entry.at("position"));
 		stage.timeline.push_back(std::move(timelineEntry));
 	}
@@ -87,10 +95,19 @@ void SaveStageDefinition(const StageDefinition& stage, const std::string& utf8Pa
 	playerData["weapons"] = stage.player.weapons;
 	data["player"] = playerData;
 
+	// optional keys are only written when actually set, so untouched stages
+	// don't grow empty "phase" fields all over their diffs
+	if(!stage.phases.empty()){
+		data["phases"] = stage.phases;
+	}
+
 	data["enemies"] = Json::array();
 	for(const auto& enemy : stage.enemies){
 		Json enemyData;
 		enemyData["id"] = enemy.id;
+		if(!enemy.phase.empty()){
+			enemyData["phase"] = enemy.phase;
+		}
 		enemyData["size"] = ToJsonArray(enemy.size);
 		enemyData["colliderSize"] = ToJsonArray(enemy.colliderSize);
 		enemyData["color"] = ToJsonArray(enemy.color);
@@ -105,6 +122,9 @@ void SaveStageDefinition(const StageDefinition& stage, const std::string& utf8Pa
 		Json entryData;
 		entryData["trigger"] = entry.trigger;
 		entryData["spawn"] = entry.spawnId;
+		if(!entry.phase.empty()){
+			entryData["phase"] = entry.phase;
+		}
 		entryData["position"] = ToJsonArray(entry.position);
 		data["timeline"].push_back(entryData);
 	}

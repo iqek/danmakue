@@ -109,6 +109,20 @@ void DrawTriggerEditor(Json& trigger){
 	}
 }
 
+void DrawPhaseCombo(std::string& phase, const StageDefinition& stage){
+	if(ImGui::BeginCombo("Phase", phase.empty() ? "(none)" : phase.c_str())){
+		if(ImGui::Selectable("(none)", phase.empty())){
+			phase.clear();
+		}
+		for(const auto& name : stage.phases){
+			if(ImGui::Selectable(name.c_str(), name == phase)){
+				phase = name;
+			}
+		}
+		ImGui::EndCombo();
+	}
+}
+
 void DrawSpawnIdCombo(TimelineEntry& entry, const StageDefinition& stage){
 	if(ImGui::BeginCombo("Spawn Id", entry.spawnId.c_str())){
 		for(const auto& enemy : stage.enemies){
@@ -120,8 +134,9 @@ void DrawSpawnIdCombo(TimelineEntry& entry, const StageDefinition& stage){
 	}
 }
 
-void DrawEnemyInspector(EnemyDefinition& enemy){
+void DrawEnemyInspector(EnemyDefinition& enemy, const StageDefinition& stage){
 	ImGui::InputText("Id", &enemy.id);
+	DrawPhaseCombo(enemy.phase, stage);
 	ImGui::DragFloat2("Size", &enemy.size.x);
 	ImGui::DragFloat2("Collider Size", &enemy.colliderSize.x);
 	ImGui::ColorEdit4("Color", &enemy.color.x);
@@ -138,6 +153,7 @@ void DrawEnemyInspector(EnemyDefinition& enemy){
 
 void DrawTimelineInspector(TimelineEntry& entry, const StageDefinition& stage){
 	DrawSpawnIdCombo(entry, stage);
+	DrawPhaseCombo(entry.phase, stage);
 	ImGui::DragFloat2("Position", &entry.position.x);
 
 	ImGui::Spacing();
@@ -167,7 +183,7 @@ void InspectorPanel::Draw(const char* title, StageDefinition& stage, bool player
 		DrawPlayerInspector(stage.player);
 	}
 	else if(selectedEnemyIndex >= 0 && selectedEnemyIndex < static_cast<int>(stage.enemies.size())){
-		DrawEnemyInspector(stage.enemies[selectedEnemyIndex]);
+		DrawEnemyInspector(stage.enemies[selectedEnemyIndex], stage);
 	}
 	else if(selectedTimelineIndex >= 0 && selectedTimelineIndex < static_cast<int>(stage.timeline.size())){
 		DrawTimelineInspector(stage.timeline[selectedTimelineIndex], stage);

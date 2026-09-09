@@ -87,6 +87,8 @@ bool SpawnVisibility::IsVisible(const TimelineEntry& entry, int index, int selec
 			return index == selectedIndex;
 		case Mode::ByEnemy:
 			return entry.spawnId == enemyId;
+		case Mode::ByPhase:
+			return entry.phase == phase;
 		default:
 			return true;
 	}

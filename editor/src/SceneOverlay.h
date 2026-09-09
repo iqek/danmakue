@@ -19,10 +19,12 @@ struct SpawnVisibility {
 		All,
 		SelectedOnly,
 		ByEnemy,
+		ByPhase,
 	};
 
 	Mode mode = Mode::All;
 	std::string enemyId;
+	std::string phase;
 
 	bool IsVisible(const TimelineEntry& entry, int index, int selectedIndex) const;
 };
