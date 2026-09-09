@@ -33,22 +33,22 @@
                 "waypoints": [
                     {
                         "position": [
-                            400,
-                            150
+                            425.902405,
+                            74.88324
                         ],
                         "waitTime": 2.0
                     },
                     {
                         "position": [
-                            700,
-                            250
+                            1078.173706,
+                            154.161682
                         ],
                         "waitTime": 2.0
                     },
                     {
                         "position": [
-                            300,
-                            300
+                            325.902405,
+                            463.18515
                         ],
                         "waitTime": 2.0
                     }
@@ -126,20 +126,36 @@
         "lives": 3,
         "moveSpeed": 300.0,
         "position": [
-            640.0,
-            360.0
+            919.7453,
+            546.496765
         ],
         "size": [
             80.0,
             80.0
         ],
-        "weapons": []
+        "weapons": [
+            {
+                "bulletSpeed": 300.0,
+                "color": [
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "direction": [
+                    0.0,
+                    -1.0
+                ],
+                "interval": 0.2,
+                "type": "straightShot"
+            }
+        ]
     },
     "timeline": [
         {
             "position": [
-                400.0,
-                -50.0
+                210.912643,
+                214.203842
             ],
             "spawn": "waypointBurst",
             "trigger": {
@@ -149,8 +165,8 @@
         },
         {
             "position": [
-                -50.0,
-                500.0
+                -112.165596,
+                474.097656
             ],
             "spawn": "aimedDrifter",
             "trigger": {
@@ -159,8 +175,8 @@
         },
         {
             "position": [
-                -50.0,
-                200.0
+                1092.293091,
+                150.785782
             ],
             "spawn": "aimedDrifter",
             "trigger": {

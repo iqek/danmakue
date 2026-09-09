@@ -16,6 +16,7 @@ public:
 
 	bool IsPlayerSelected() const { return playerSelected; }
 	int GetSelected() const { return selectedIndex; }
+	void SelectPlayer() { playerSelected = true; selectedIndex = -1; }
 	void ClearSelection() { playerSelected = false; selectedIndex = -1; }
 };
 

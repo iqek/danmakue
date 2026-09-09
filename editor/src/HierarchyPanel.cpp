@@ -1,11 +1,39 @@
 #include "HierarchyPanel.h"
 
+#include <cctype>
 #include <imgui.h>
 #include <string>
 
 namespace Editor {
 
 namespace {
+
+bool IsIdTaken(const StageDefinition& stage, const std::string& candidate){
+	for(const auto& enemy : stage.enemies){
+		if(enemy.id == candidate){
+			return true;
+		}
+	}
+	return false;
+}
+
+// "bat" -> "bat2", and a copy of "bat2" -> "bat3" rather than "bat22"
+std::string GenerateCopyId(const StageDefinition& stage, const std::string& sourceId){
+	std::string base = sourceId;
+	while(!base.empty() && std::isdigit(static_cast<unsigned char>(base.back()))){
+		base.pop_back();
+	}
+	if(base.empty()){
+		base = "enemy";
+	}
+
+	for(int suffix = 2; ; suffix++){
+		std::string candidate = base + std::to_string(suffix);
+		if(!IsIdTaken(stage, candidate)){
+			return candidate;
+		}
+	}
+}
 
 std::string GenerateUniqueEnemyId(const StageDefinition& stage){
 	int index = 0;
@@ -53,6 +81,19 @@ bool HierarchyPanel::Draw(const char* title, StageDefinition& stage){
 		selectedIndex = static_cast<int>(stage.enemies.size()) - 1;
 		changed = true;
 	}
+
+	bool enemySelected = selectedIndex >= 0 && selectedIndex < static_cast<int>(stage.enemies.size());
+	ImGui::BeginDisabled(!enemySelected);
+	if(ImGui::Button("Duplicate")){
+		EnemyDefinition copy = stage.enemies[selectedIndex];
+		copy.id = GenerateCopyId(stage, copy.id);
+		// insert next to the source rather than at the end - there's no way
+		// to reorder the list yet, so appending would strand it
+		stage.enemies.insert(stage.enemies.begin() + selectedIndex + 1, copy);
+		selectedIndex++;
+		changed = true;
+	}
+	ImGui::EndDisabled();
 
 	ImGui::Separator();
 
