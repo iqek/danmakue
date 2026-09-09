@@ -7,9 +7,12 @@
 
 namespace Editor {
 
-// An enemy template: everything about it except where/when it spawns
+// An enemy template: everything about it except where/when it spawns.
+// phase is an optional editor-side grouping label ("mid boss", "opening"),
+// ignored by the runtime - it only organizes the editor's lists and overlay
 struct EnemyDefinition {
 	std::string id;
+	std::string phase;
 	glm::vec2 size{ 40.0f, 40.0f };
 	glm::vec2 colliderSize{ 36.0f, 36.0f };
 	glm::vec4 color{ 1.0f, 1.0f, 1.0f, 1.0f };
@@ -22,6 +25,7 @@ struct EnemyDefinition {
 struct TimelineEntry {
 	nlohmann::json trigger = nlohmann::json::object();
 	std::string spawnId;
+	std::string phase;
 	glm::vec2 position{ 0.0f, 0.0f };
 };
 
@@ -38,6 +42,8 @@ struct PlayerDefinition {
 
 struct StageDefinition {
 	PlayerDefinition player;
+	// declared separately so a phase can exist before anything is put in it
+	std::vector<std::string> phases;
 	std::vector<EnemyDefinition> enemies;
 	std::vector<TimelineEntry> timeline;
 };

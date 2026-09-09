@@ -12,6 +12,7 @@
 #include "InspectorPanel.h"
 #include "LogPanel.h"
 #include "LogSink.h"
+#include "SceneOverlay.h"
 #include "StageDefinition.h"
 #include "StagePanel.h"
 #include "TimelinePanel.h"
@@ -120,17 +121,44 @@ int main(){
 		// to fit here (letterboxed) instead of being resized to match -
 		// otherwise resizing docks would distort the stage's own coordinates
 		ImVec2 available = ImGui::GetContentRegionAvail();
-		float scale = std::min(available.x / Editor::EmbeddedGame::kWidth, available.y / Editor::EmbeddedGame::kHeight);
-		scale = std::max(scale, 0.0f);
-		ImVec2 displaySize(Editor::EmbeddedGame::kWidth * scale, Editor::EmbeddedGame::kHeight * scale);
+		ImVec2 panelOrigin = ImGui::GetCursorScreenPos();
 
-		ImVec2 cursor = ImGui::GetCursorPos();
-		ImGui::SetCursorPos(ImVec2(cursor.x + (available.x - displaySize.x) * 0.5f, cursor.y + (available.y - displaySize.y) * 0.5f));
+		bool editing = !embeddedGame.IsPlaying();
+		float margin = editing ? Editor::kSceneEditMargin : 0.0f;
+		float visibleWidth = Editor::EmbeddedGame::kWidth + margin * 2.0f;
+		float visibleHeight = Editor::EmbeddedGame::kHeight + margin * 2.0f;
+
+		float scale = std::min(available.x / visibleWidth, available.y / visibleHeight);
+		scale = std::max(scale, 0.0f);
+
+		ImVec2 visibleSize(visibleWidth * scale, visibleHeight * scale);
+		ImVec2 imageMin(
+			panelOrigin.x + (available.x - visibleSize.x) * 0.5f + margin * scale,
+			panelOrigin.y + (available.y - visibleSize.y) * 0.5f + margin * scale
+		);
+		ImVec2 imageMax(imageMin.x + Editor::EmbeddedGame::kWidth * scale, imageMin.y + Editor::EmbeddedGame::kHeight * scale);
+
+		ImGui::SetCursorScreenPos(imageMin);
 
 		bool inputAllowed = ImGui::IsWindowFocused() && !ImGui::GetIO().WantTextInput;
 		// the GL texture's origin is bottom-left, but this engine's projection
 		// puts world-top at the top of the image - flip V or the preview is upside down
-		ImGui::Image(static_cast<ImTextureID>(embeddedGame.GetColorTextureId()), displaySize, ImVec2(0.0f, 1.0f), ImVec2(1.0f, 0.0f));
+		ImGui::Image(static_cast<ImTextureID>(embeddedGame.GetColorTextureId()), ImVec2(imageMax.x - imageMin.x, imageMax.y - imageMin.y), ImVec2(0.0f, 1.0f), ImVec2(1.0f, 0.0f));
+
+		if(editing){
+			// outline the play area, since the margin around it is only visible in the editor
+			ImGui::GetWindowDrawList()->AddRect(imageMin, imageMax, IM_COL32(255, 255, 255, 60));
+
+			Editor::SceneOverlayResult overlay = Editor::DrawSceneOverlay(stage, imageMin, scale, timelinePanel.GetSpawnVisibility(), hierarchyPanel.IsPlayerSelected(), hierarchyPanel.GetSelected(), timelinePanel.GetSelected());
+			if(overlay.clickedTimelineIndex >= 0){
+				hierarchyPanel.ClearSelection();
+				timelinePanel.SetSelected(overlay.clickedTimelineIndex);
+			}
+			if(overlay.clickedPlayer){
+				timelinePanel.ClearSelection();
+				hierarchyPanel.SelectPlayer();
+			}
+		}
 
 		ImGui::End();
 

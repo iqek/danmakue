@@ -1,5 +1,6 @@
 #pragma once
 
+#include "SceneOverlay.h"
 #include "StageDefinition.h"
 
 namespace Editor {
@@ -9,12 +10,16 @@ namespace Editor {
 class TimelinePanel {
 private:
 	int selectedIndex = -1;
+	SpawnVisibility spawnVisibility;
 
 public:
 	// returns true if the selection changed this frame
 	bool Draw(const char* title, StageDefinition& stage);
 
+	const SpawnVisibility& GetSpawnVisibility() const { return spawnVisibility; }
+
 	int GetSelected() const { return selectedIndex; }
+	void SetSelected(int index) { selectedIndex = index; }
 	void ClearSelection() { selectedIndex = -1; }
 };
 
