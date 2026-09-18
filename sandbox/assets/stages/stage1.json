@@ -32,23 +32,23 @@
                 "type": "waypoint",
                 "waypoints": [
                     {
-                        "position": [
-                            425.902405,
-                            74.88324
+                        "offset": [
+                            214.989761,
+                            -139.320602
                         ],
                         "waitTime": 2.0
                     },
                     {
-                        "position": [
-                            1078.173706,
-                            154.161682
+                        "offset": [
+                            867.261047,
+                            -60.04216
                         ],
                         "waitTime": 2.0
                     },
                     {
-                        "position": [
-                            325.902405,
-                            463.18515
+                        "offset": [
+                            114.989761,
+                            248.981308
                         ],
                         "waitTime": 2.0
                     }
@@ -110,6 +110,44 @@
                 40.0,
                 40.0
             ]
+        },
+        {
+            "colliderSize": [
+                36.0,
+                36.0
+            ],
+            "color": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+            ],
+            "emitters": [],
+            "health": 1,
+            "id": "marisa",
+            "movement": {
+                "type": "linear",
+                "velocity": [
+                    0.0,
+                    0.0
+                ]
+            },
+            "phase": "mid",
+            "size": [
+                40.0,
+                40.0
+            ]
+        }
+    ],
+    "phases": [
+        {
+            "color": [
+                0.58,
+                0.9,
+                0.83,
+                1.0
+            ],
+            "name": "mid"
         }
     ],
     "player": {
@@ -160,7 +198,7 @@
             "spawn": "waypointBurst",
             "trigger": {
                 "seconds": 1.0,
-                "type": "time"
+                "type": "delay"
             }
         },
         {

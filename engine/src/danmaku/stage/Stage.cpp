@@ -8,18 +8,19 @@ void Stage::AddEvent(StageEvent event){
 }
 
 void Stage::Update(entt::registry& registry, float deltaTime){
-	elapsedTime += deltaTime;
+	timeSinceLastEvent += deltaTime;
 
-	// while, not if, in case a frame hitch makes more than one event ready
-	while(nextEvent < events.size() && events[nextEvent].trigger(registry, elapsedTime)){
+	// while, not if, so any number of zero-delay events share one instant
+	while(nextEvent < events.size() && events[nextEvent].trigger(registry, timeSinceLastEvent)){
 		events[nextEvent].spawn(registry);
 		nextEvent++;
+		timeSinceLastEvent = 0.0f;
 	}
 }
 
-std::function<bool(entt::registry&, float)> TimeTrigger(float seconds){
-	return [seconds](entt::registry&, float elapsedTime){
-		return elapsedTime >= seconds;
+std::function<bool(entt::registry&, float)> DelayTrigger(float seconds){
+	return [seconds](entt::registry&, float timeSinceLastEvent){
+		return timeSinceLastEvent >= seconds;
 	};
 }
 

@@ -4,7 +4,6 @@
 
 #include <algorithm>
 #include <cctype>
-#include <cfloat>
 #include <imgui.h>
 #include <imgui_stdlib.h>
 #include <string>
@@ -44,16 +43,7 @@ std::string GenerateUniqueEnemyId(const StageDefinition& stage){
 	int index = 0;
 	while(true){
 		std::string candidate = "enemy" + std::to_string(index);
-
-		bool collision = false;
-		for(const auto& enemy : stage.enemies){
-			if(enemy.id == candidate){
-				collision = true;
-				break;
-			}
-		}
-
-		if(!collision){
+		if(!IsIdTaken(stage, candidate)){
 			return candidate;
 		}
 		index++;
@@ -67,12 +57,15 @@ void HierarchyPanel::AddPhase(StageDefinition& stage){
 		return;
 	}
 
-	if(std::find(stage.phases.begin(), stage.phases.end(), newPhaseName) != stage.phases.end()){
+	if(FindPhase(stage, newPhaseName) != nullptr){
 		ENGINE_CORE_ERROR("Phase already exists: {}", newPhaseName);
 		return;
 	}
 
-	stage.phases.push_back(newPhaseName);
+	PhaseDefinition phase;
+	phase.name = newPhaseName;
+	phase.color = DefaultPhaseColor(phase.name);
+	stage.phases.push_back(phase);
 	newPhaseName.clear();
 }
 
@@ -84,51 +77,27 @@ bool HierarchyPanel::Draw(const char* title, StageDefinition& stage){
 	if(ImGui::Selectable("Player", playerSelected)){
 		playerSelected = true;
 		selectedIndex = -1;
+		selectedPhase = -1;
 		changed = true;
 	}
 
 	ImGui::Separator();
 
-	// every structural change is deferred to the end of the frame - doing it
-	// inline would resize the vectors the row loops are walking
+	// every structural change is deferred, so it can't resize the vectors being walked
 	int removeIndex = -1;
 	int removePhaseIndex = -1;
 	int duplicateIndex = -1;
 	// -2 means no request, -1 means unphased, otherwise an index into phases
 	int newEnemyPhase = -2;
-	float removeButtonWidth = ImGui::GetFrameHeight();
-
-	if(ImGui::Button("New Enemy")){
-		newEnemyPhase = -1;
-	}
-
-	bool enemySelected = selectedIndex >= 0 && selectedIndex < static_cast<int>(stage.enemies.size());
-	ImGui::BeginDisabled(!enemySelected);
-	if(ImGui::Button("Duplicate")){
-		duplicateIndex = selectedIndex;
-	}
-	ImGui::EndDisabled();
-
-	ImGui::Separator();
-
-	ImGui::SetNextItemWidth(-FLT_MIN);
-	if(ImGui::InputTextWithHint("##newPhase", "new phase name", &newPhaseName, ImGuiInputTextFlags_EnterReturnsTrue)){
-		AddPhase(stage);
-	}
-	if(ImGui::Button("Add Phase")){
-		AddPhase(stage);
-	}
-
-	ImGui::Separator();
 
 	auto drawPhaseMenuItems = [&](std::string& phase){
 		if(ImGui::BeginMenu("Move to phase")){
 			if(ImGui::MenuItem("(none)", nullptr, phase.empty())){
 				phase.clear();
 			}
-			for(const auto& name : stage.phases){
-				if(ImGui::MenuItem(name.c_str(), nullptr, name == phase)){
-					phase = name;
+			for(const auto& definition : stage.phases){
+				if(ImGui::MenuItem(definition.name.c_str(), nullptr, definition.name == phase)){
+					phase = definition.name;
 				}
 			}
 			ImGui::EndMenu();
@@ -138,15 +107,14 @@ bool HierarchyPanel::Draw(const char* title, StageDefinition& stage){
 	auto drawEnemyRow = [&](int i){
 		ImGui::PushID(i);
 
-		float selectableWidth = ImGui::GetContentRegionAvail().x - removeButtonWidth - ImGui::GetStyle().ItemSpacing.x;
-		if(ImGui::Selectable(stage.enemies[i].id.c_str(), selectedIndex == i, 0, ImVec2(selectableWidth, 0.0f))){
+		if(ImGui::Selectable(stage.enemies[i].id.c_str(), selectedIndex == i)){
 			playerSelected = false;
+			selectedPhase = -1;
 			selectedIndex = i;
 			changed = true;
 		}
 
-		// the payload type keeps these from being dropped on the Timeline's
-		// phase headers, where the index would address the wrong vector
+		// a distinct payload type keeps these off the Timeline's rows, which index another vector
 		if(ImGui::BeginDragDropSource()){
 			ImGui::SetDragDropPayload("ENEMY_ROW", &i, sizeof(int));
 			ImGui::TextUnformatted(stage.enemies[i].id.c_str());
@@ -165,30 +133,26 @@ bool HierarchyPanel::Draw(const char* title, StageDefinition& stage){
 			ImGui::EndPopup();
 		}
 
-		ImGui::SameLine();
-		if(ImGui::SmallButton("X")){
-			removeIndex = i;
-		}
-
 		ImGui::PopID();
 	};
 
-	auto acceptEnemyDrop = [&](const std::string& phase){
-		if(ImGui::BeginDragDropTarget()){
-			if(const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENEMY_ROW")){
-				int dragged = *static_cast<const int*>(payload->Data);
-				if(dragged >= 0 && dragged < static_cast<int>(stage.enemies.size())){
-					stage.enemies[dragged].phase = phase;
-				}
-			}
-			ImGui::EndDragDropTarget();
+	// tagging the enemy is what moves every spawn of it, so this panel owns phases
+	auto acceptPhaseDrop = [&](const std::string& phase){
+		if(!ImGui::BeginDragDropTarget()){
+			return;
 		}
+		if(const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENEMY_ROW")){
+			int dragged = *static_cast<const int*>(payload->Data);
+			if(dragged >= 0 && dragged < static_cast<int>(stage.enemies.size())){
+				stage.enemies[dragged].phase = phase;
+			}
+		}
+		ImGui::EndDragDropTarget();
 	};
 
-	// an enemy tagged with a phase that no longer exists still has to appear
-	// somewhere, so it falls back into the unphased group rather than vanishing
+	// an enemy tagged with a phase that no longer exists falls back here instead of vanishing
 	auto isUnphased = [&](const EnemyDefinition& enemy){
-		return enemy.phase.empty() || std::find(stage.phases.begin(), stage.phases.end(), enemy.phase) == stage.phases.end();
+		return enemy.phase.empty() || FindPhase(stage, enemy.phase) == nullptr;
 	};
 
 	auto drawUnphased = [&](){
@@ -200,11 +164,29 @@ bool HierarchyPanel::Draw(const char* title, StageDefinition& stage){
 	};
 
 	for(int p = 0; p < static_cast<int>(stage.phases.size()); p++){
-		std::string phase = stage.phases[p];
+		std::string phase = stage.phases[p].name;
+		const glm::vec4& color = stage.phases[p].color;
 
 		ImGui::PushID(phase.c_str());
-		bool open = ImGui::TreeNodeEx(phase.c_str(), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanTextWidth);
-		acceptEnemyDrop(phase);
+
+		ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanTextWidth | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
+		if(selectedPhase == p){
+			nodeFlags |= ImGuiTreeNodeFlags_Selected;
+		}
+
+		// the header wears the phase's own colour, so it matches the track at a glance
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(color.r, color.g, color.b, 1.0f));
+		bool open = ImGui::TreeNodeEx(phase.c_str(), nodeFlags);
+		ImGui::PopStyleColor();
+
+		if(ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()){
+			playerSelected = false;
+			selectedIndex = -1;
+			selectedPhase = p;
+			changed = true;
+		}
+
+		acceptPhaseDrop(phase);
 
 		if(ImGui::BeginPopupContextItem()){
 			if(ImGui::MenuItem("New Enemy Here")){
@@ -214,11 +196,6 @@ bool HierarchyPanel::Draw(const char* title, StageDefinition& stage){
 				removePhaseIndex = p;
 			}
 			ImGui::EndPopup();
-		}
-
-		ImGui::SameLine();
-		if(ImGui::SmallButton("X")){
-			removePhaseIndex = p;
 		}
 
 		if(open){
@@ -232,12 +209,24 @@ bool HierarchyPanel::Draw(const char* title, StageDefinition& stage){
 		ImGui::PopID();
 	}
 
+	bool anyUnphased = false;
+	for(const auto& enemy : stage.enemies){
+		if(isUnphased(enemy)){
+			anyUnphased = true;
+			break;
+		}
+	}
+
+	// the group is clutter when it is empty, but it still has to exist as a drop target
+	const ImGuiPayload* carried = ImGui::GetDragDropPayload();
+	bool draggingEnemy = carried != nullptr && carried->IsDataType("ENEMY_ROW");
+
 	if(stage.phases.empty()){
 		drawUnphased();
 	}
-	else{
+	else if(anyUnphased || draggingEnemy){
 		bool open = ImGui::TreeNodeEx("(unphased)", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanTextWidth);
-		acceptEnemyDrop(std::string());
+		acceptPhaseDrop(std::string());
 
 		if(ImGui::BeginPopupContextItem()){
 			if(ImGui::MenuItem("New Enemy Here")){
@@ -272,14 +261,14 @@ bool HierarchyPanel::Draw(const char* title, StageDefinition& stage){
 	if(newEnemyPhase != -2){
 		EnemyDefinition enemy;
 		enemy.id = GenerateUniqueEnemyId(stage);
-		// a zero-velocity default keeps the movement JSON valid so the enemy
-		// can actually spawn even before its movement is set up
+		// a zero-velocity default keeps the JSON valid, so a fresh enemy can already spawn
 		enemy.movement = nlohmann::json{ { "type", "linear" }, { "velocity", nlohmann::json::array({ 0.0, 0.0 }) } };
 		if(newEnemyPhase >= 0 && newEnemyPhase < static_cast<int>(stage.phases.size())){
-			enemy.phase = stage.phases[newEnemyPhase];
+			enemy.phase = stage.phases[newEnemyPhase].name;
 		}
 		stage.enemies.push_back(enemy);
 		playerSelected = false;
+		selectedPhase = -1;
 		selectedIndex = static_cast<int>(stage.enemies.size()) - 1;
 		changed = true;
 	}
@@ -287,27 +276,28 @@ bool HierarchyPanel::Draw(const char* title, StageDefinition& stage){
 	if(duplicateIndex >= 0 && duplicateIndex < static_cast<int>(stage.enemies.size())){
 		EnemyDefinition copy = stage.enemies[duplicateIndex];
 		copy.id = GenerateCopyId(stage, copy.id);
-		// insert next to the source rather than at the end - there's no way
-		// to reorder the list yet, so appending would strand it
+		// insert beside the source, since there is still no way to reorder this list
 		stage.enemies.insert(stage.enemies.begin() + duplicateIndex + 1, copy);
 		selectedIndex = duplicateIndex + 1;
 		playerSelected = false;
+		selectedPhase = -1;
 		changed = true;
 	}
 
 	if(removePhaseIndex >= 0){
 		// deleting a phase only unlabels its members, it never deletes content
-		std::string removed = stage.phases[removePhaseIndex];
+		std::string removed = stage.phases[removePhaseIndex].name;
 		stage.phases.erase(stage.phases.begin() + removePhaseIndex);
 		for(auto& enemy : stage.enemies){
 			if(enemy.phase == removed){
 				enemy.phase.clear();
 			}
 		}
-		for(auto& entry : stage.timeline){
-			if(entry.phase == removed){
-				entry.phase.clear();
-			}
+		if(selectedPhase == removePhaseIndex){
+			selectedPhase = -1;
+		}
+		else if(selectedPhase > removePhaseIndex){
+			selectedPhase--;
 		}
 	}
 

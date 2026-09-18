@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Selection.h"
 #include "StageDefinition.h"
 
 #include <imgui.h>
@@ -12,21 +13,11 @@ namespace Editor {
 // still be recovered from the Inspector's position field
 constexpr float kSceneEditMargin = 120.0f;
 
-// Which spawn markers the scene overlay draws - a full stage has far more
-// spawn points than are useful to look at all at once
-struct SpawnVisibility {
-	enum class Mode {
-		All,
-		SelectedOnly,
-		ByEnemy,
-		ByPhase,
-	};
-
-	Mode mode = Mode::All;
-	std::string enemyId;
-	std::string phase;
-
-	bool IsVisible(const TimelineEntry& entry, int index, int selectedIndex) const;
+// What the overlay draws beyond whatever is selected.
+// With both off it follows the selection: a spawn, an enemy's spawns, or a whole phase.
+struct SceneViewOptions {
+	bool showAllSpawns = true;
+	bool showAllPaths = false;
 };
 
 struct SceneOverlayResult {
@@ -34,11 +25,15 @@ struct SceneOverlayResult {
 	bool clickedPlayer = false;
 };
 
-// Draggable markers over the game view for the positions that are actually
-// stored fields: each timeline entry's spawn point, the player's spawn, and
-// the waypoints of whichever enemy is in context. Everything else on screen
-// at runtime is computed from movement, so there's nothing to drag for it.
-// imageMin is where world (0,0) sits on screen, scale converts game units to pixels
-SceneOverlayResult DrawSceneOverlay(StageDefinition& stage, const ImVec2& imageMin, float scale, const SpawnVisibility& visibility, bool playerSelected, int selectedEnemyIndex, int selectedTimelineIndex);
+// Whether the selection is about this spawn: itself, its enemy, or its enemy's phase.
+// Both SceneViewOptions toggles fall back to this when they are off.
+bool SelectionCovers(const StageDefinition& stage, const Selection& selection, int timelineIndex);
+
+// Draggable markers over the game view for the positions that are actually stored
+// fields: each timeline entry's spawn point, the player's spawn, and the waypoint
+// paths hanging off those spawns. Everything else on screen at runtime is computed
+// from movement, so there's nothing to drag for it.
+// imageMin is where world (0,0) sits on screen, scale converts game units to pixels.
+SceneOverlayResult DrawSceneOverlay(StageDefinition& stage, const ImVec2& imageMin, float scale, const Selection& selection, const SceneViewOptions& options);
 
 }

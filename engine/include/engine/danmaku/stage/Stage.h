@@ -8,7 +8,8 @@
 namespace Engine {
 
 struct StageEvent {
-	std::function<bool(entt::registry&, float elapsedTime)> trigger;
+	// the float is seconds since the previous event fired, not since the stage began
+	std::function<bool(entt::registry&, float)> trigger;
 	std::function<void(entt::registry&)> spawn;
 };
 
@@ -17,15 +18,18 @@ class Stage {
 private:
 	std::vector<StageEvent> events;
 	std::size_t nextEvent = 0;
-	float elapsedTime = 0.0f;
+	float timeSinceLastEvent = 0.0f;
 
 public:
 	void AddEvent(StageEvent event);
 	void Update(entt::registry& registry, float deltaTime);
 };
 
-// Common trigger builders, so callers don't have to write raw lambdas
-std::function<bool(entt::registry&, float)> TimeTrigger(float seconds);
+// Fires once that many seconds have passed since the previous event.
+// A delay of zero spawns in the same instant as the event before it.
+std::function<bool(entt::registry&, float)> DelayTrigger(float seconds);
+
+// Fires once nothing is left alive on screen.
 std::function<bool(entt::registry&, float)> AfterEnemiesCleared();
 
 }

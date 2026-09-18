@@ -4,15 +4,16 @@
 
 namespace Editor {
 
-// Stable id for the main dockspace, independent of ImGui's own per-viewport
-// auto-generated id (which is awkward to compute before the dockspace exists)
+// Stable id for the main dockspace, so it can be named before the dockspace exists.
 ImGuiID GetMainDockspaceId();
 
-// Builds the default panel layout for that id, but only if no layout was
-// already restored from imgui.ini - once the user rearranges panels, that
-// file takes over and this is skipped on every later launch. Must be called
-// after at least one ImGui::NewFrame() (for a valid viewport size) and
-// before this frame's DockSpaceOverViewport call.
+// Builds the default panel layout, but only when imgui.ini restored none.
+// Once the user rearranges panels that file takes over and this is skipped.
+// Call it after a NewFrame() and before this frame's DockSpaceOverViewport().
 void SetupDefaultDockLayoutIfNeeded();
+
+// Throws away the current layout and rebuilds the default one.
+// Same frame ordering rules as SetupDefaultDockLayoutIfNeeded().
+void ResetDockLayout();
 
 }
