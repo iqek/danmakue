@@ -125,7 +125,7 @@
             "spawn": "enemy0",
             "trigger": {
                 "seconds": 2.9,
-                "type": "time"
+                "type": "delay"
             }
         },
         {

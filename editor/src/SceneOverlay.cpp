@@ -2,6 +2,7 @@
 #include "JsonFieldHelpers.h"
 
 #include <string>
+#include <vector>
 
 namespace Editor {
 
@@ -10,12 +11,31 @@ namespace {
 constexpr float handleRadius = 7.0f;
 
 const ImU32 spawnColor = IM_COL32(255, 190, 80, 255);
+const ImU32 dimSpawnColor = IM_COL32(255, 190, 80, 130);
 const ImU32 selectedColor = IM_COL32(255, 255, 255, 255);
 const ImU32 playerColor = IM_COL32(255, 140, 165, 255);
-const ImU32 waypointColor = IM_COL32(120, 230, 220, 255);
 
 ImVec2 WorldToScreen(const glm::vec2& world, const ImVec2& imageMin, float scale){
 	return ImVec2(imageMin.x + world.x * scale, imageMin.y + world.y * scale);
+}
+
+int FindEnemyIndex(const StageDefinition& stage, const std::string& id){
+	for(int i = 0; i < static_cast<int>(stage.enemies.size()); i++){
+		if(stage.enemies[i].id == id){
+			return i;
+		}
+	}
+	return -1;
+}
+
+// a path wears its enemy's phase colour, so several drawn at once still read apart
+ImU32 PathColor(const StageDefinition& stage, const EnemyDefinition& enemy, bool emphasised){
+	float alpha = emphasised ? 1.0f : 0.45f;
+	if(enemy.phase.empty()){
+		return IM_COL32(120, 230, 220, static_cast<int>(alpha * 255.0f));
+	}
+	glm::vec4 color = PhaseColorOf(stage, enemy.phase);
+	return ImGui::GetColorU32(ImVec4(color.r, color.g, color.b, alpha));
 }
 
 // moves world by the mouse delta while held; clicked reports the press itself
@@ -43,7 +63,8 @@ void DrawMarker(ImDrawList* drawList, const ImVec2& screen, ImU32 color, bool se
 	drawList->AddText(ImVec2(screen.x + handleRadius + 3.0f, screen.y - 7.0f), color, label.c_str());
 }
 
-void DrawWaypoints(EnemyDefinition& enemy, const ImVec2& imageMin, float scale, ImDrawList* drawList){
+// anchor is the spawn point the path hangs off, since waypoints are stored as offsets
+void DrawWaypoints(EnemyDefinition& enemy, const glm::vec2& anchor, ImU32 color, const ImVec2& imageMin, float scale, ImDrawList* drawList){
 	if(enemy.movement.value("type", std::string()) != "waypoint"){
 		return;
 	}
@@ -55,83 +76,121 @@ void DrawWaypoints(EnemyDefinition& enemy, const ImVec2& imageMin, float scale, 
 
 	ImGui::PushID("waypoints");
 
+	// deferred, so the menu can't resize the array this loop is walking
+	int addAfter = -2;
+	int removeAt = -1;
+
 	// path first, so the handles sit on top of the lines
-	for(int i = 0; i + 1 < static_cast<int>(waypoints.size()); i++){
-		glm::vec2 from = GetVec2(waypoints[i], "position", glm::vec2(0.0f));
-		glm::vec2 to = GetVec2(waypoints[i + 1], "position", glm::vec2(0.0f));
-		drawList->AddLine(WorldToScreen(from, imageMin, scale), WorldToScreen(to, imageMin, scale), waypointColor, 1.5f);
+	glm::vec2 previous = anchor;
+	for(int i = 0; i < static_cast<int>(waypoints.size()); i++){
+		glm::vec2 point = anchor + GetVec2(waypoints[i], "offset", glm::vec2(0.0f));
+		drawList->AddLine(WorldToScreen(previous, imageMin, scale), WorldToScreen(point, imageMin, scale), color, 1.5f);
+		previous = point;
 	}
 
 	for(int i = 0; i < static_cast<int>(waypoints.size()); i++){
 		ImGui::PushID(i);
 
-		glm::vec2 point = GetVec2(waypoints[i], "position", glm::vec2(0.0f));
+		glm::vec2 point = anchor + GetVec2(waypoints[i], "offset", glm::vec2(0.0f));
 		bool clicked = false;
 		if(DragHandle("##waypoint", point, imageMin, scale, clicked)){
-			SetVec2(waypoints[i], "position", point);
+			SetVec2(waypoints[i], "offset", point - anchor);
 		}
 
-		DrawMarker(drawList, WorldToScreen(point, imageMin, scale), waypointColor, false, std::to_string(i));
+		if(ImGui::BeginPopupContextItem()){
+			if(ImGui::MenuItem("Add Point After")){
+				addAfter = i;
+			}
+			if(ImGui::MenuItem("Delete Point")){
+				removeAt = i;
+			}
+			ImGui::EndPopup();
+		}
+
+		DrawMarker(drawList, WorldToScreen(point, imageMin, scale), color, false, std::to_string(i));
 
 		ImGui::PopID();
 	}
 
 	ImGui::PopID();
-}
 
-}
-
-bool SpawnVisibility::IsVisible(const TimelineEntry& entry, int index, int selectedIndex) const{
-	switch(mode){
-		case Mode::SelectedOnly:
-			return index == selectedIndex;
-		case Mode::ByEnemy:
-			return entry.spawnId == enemyId;
-		case Mode::ByPhase:
-			return entry.phase == phase;
-		default:
-			return true;
+	if(addAfter != -2){
+		InsertWaypointAfter(enemy.movement, addAfter);
+	}
+	if(removeAt >= 0){
+		RemoveWaypoint(enemy.movement, removeAt);
 	}
 }
 
-SceneOverlayResult DrawSceneOverlay(StageDefinition& stage, const ImVec2& imageMin, float scale, const SpawnVisibility& visibility, bool playerSelected, int selectedEnemyIndex, int selectedTimelineIndex){
+}
+
+bool SelectionCovers(const StageDefinition& stage, const Selection& selection, int timelineIndex){
+	const TimelineEntry& entry = stage.timeline[timelineIndex];
+
+	if(selection.timeline >= 0){
+		return timelineIndex == selection.timeline;
+	}
+	if(selection.enemy >= 0 && selection.enemy < static_cast<int>(stage.enemies.size())){
+		return entry.spawnId == stage.enemies[selection.enemy].id;
+	}
+	if(selection.phase >= 0 && selection.phase < static_cast<int>(stage.phases.size())){
+		return EntryPhase(stage, entry) == stage.phases[selection.phase].name;
+	}
+	return false;
+}
+
+SceneOverlayResult DrawSceneOverlay(StageDefinition& stage, const ImVec2& imageMin, float scale, const Selection& selection, const SceneViewOptions& options){
 	SceneOverlayResult result;
 	ImDrawList* drawList = ImGui::GetWindowDrawList();
 
-	// show the path of the selected enemy, or of whatever the selected
-	// timeline entry spawns - so picking a spawn point also shows where it goes
-	int waypointEnemyIndex = selectedEnemyIndex;
-	if(waypointEnemyIndex < 0 && selectedTimelineIndex >= 0 && selectedTimelineIndex < static_cast<int>(stage.timeline.size())){
-		const std::string& spawnId = stage.timeline[selectedTimelineIndex].spawnId;
-		for(int i = 0; i < static_cast<int>(stage.enemies.size()); i++){
-			if(stage.enemies[i].id == spawnId){
-				waypointEnemyIndex = i;
-				break;
-			}
+	// paths first so the spawn markers stay clickable on top of their own handles
+	ImGui::PushID("paths");
+	for(int i = 0; i < static_cast<int>(stage.timeline.size()); i++){
+		bool covered = SelectionCovers(stage, selection, i);
+		if(!options.showAllPaths && !covered){
+			continue;
 		}
-	}
 
-	if(waypointEnemyIndex >= 0 && waypointEnemyIndex < static_cast<int>(stage.enemies.size())){
-		DrawWaypoints(stage.enemies[waypointEnemyIndex], imageMin, scale, drawList);
+		int enemyIndex = FindEnemyIndex(stage, stage.timeline[i].spawnId);
+		if(enemyIndex < 0){
+			continue;
+		}
+
+		// scoped per spawn, or one template drawn at several anchors reuses its handle ids
+		ImGui::PushID(i);
+		DrawWaypoints(stage.enemies[enemyIndex], stage.timeline[i].position, PathColor(stage, stage.enemies[enemyIndex], covered), imageMin, scale, drawList);
+		ImGui::PopID();
 	}
+	ImGui::PopID();
 
 	ImGui::PushID("timeline");
 	for(int i = 0; i < static_cast<int>(stage.timeline.size()); i++){
-		TimelineEntry& entry = stage.timeline[i];
-		if(!visibility.IsVisible(entry, i, selectedTimelineIndex)){
+		bool covered = SelectionCovers(stage, selection, i);
+		if(!options.showAllSpawns && !covered){
 			continue;
 		}
 
 		ImGui::PushID(i);
 
 		bool clicked = false;
-		DragHandle("##spawn", entry.position, imageMin, scale, clicked);
+		DragHandle("##spawn", stage.timeline[i].position, imageMin, scale, clicked);
 		if(clicked){
 			result.clickedTimelineIndex = i;
 		}
 
-		bool selected = (i == selectedTimelineIndex);
-		DrawMarker(drawList, WorldToScreen(entry.position, imageMin, scale), selected ? selectedColor : spawnColor, selected, std::to_string(i) + ": " + entry.spawnId);
+		if(ImGui::BeginPopupContextItem()){
+			int enemyIndex = FindEnemyIndex(stage, stage.timeline[i].spawnId);
+			bool followsPath = enemyIndex >= 0 && stage.enemies[enemyIndex].movement.value("type", std::string()) == "waypoint";
+			// the way into an empty path, where there is no point to right click yet
+			if(ImGui::MenuItem("Add Waypoint", nullptr, false, followsPath)){
+				InsertWaypointAfter(stage.enemies[enemyIndex].movement, WaypointCount(stage.enemies[enemyIndex].movement) - 1);
+			}
+			ImGui::EndPopup();
+		}
+
+		bool selected = i == selection.timeline;
+		ImU32 color = selected ? selectedColor : (covered ? spawnColor : dimSpawnColor);
+		DrawMarker(drawList, WorldToScreen(stage.timeline[i].position, imageMin, scale), color, selected, std::to_string(i) + ": " + stage.timeline[i].spawnId);
 
 		ImGui::PopID();
 	}
@@ -141,7 +200,7 @@ SceneOverlayResult DrawSceneOverlay(StageDefinition& stage, const ImVec2& imageM
 	bool playerClicked = false;
 	DragHandle("##playerSpawn", stage.player.position, imageMin, scale, playerClicked);
 	result.clickedPlayer = playerClicked;
-	DrawMarker(drawList, WorldToScreen(stage.player.position, imageMin, scale), playerSelected ? selectedColor : playerColor, playerSelected, "Player");
+	DrawMarker(drawList, WorldToScreen(stage.player.position, imageMin, scale), selection.player ? selectedColor : playerColor, selection.player, "Player");
 	ImGui::PopID();
 
 	return result;

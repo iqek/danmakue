@@ -40,6 +40,16 @@ int main(){
 	Editor::StagePanel stagePanel(std::string(ASSETS_DIR) + "/stages", "stage1.json");
 	Editor::StageDefinition stage;
 
+	// rebuilt on each use, since loading a stage clears the panels' selections mid-frame
+	auto currentSelection = [&](){
+		Editor::Selection selection;
+		selection.player = hierarchyPanel.IsPlayerSelected();
+		selection.enemy = hierarchyPanel.GetSelected();
+		selection.phase = hierarchyPanel.GetSelectedPhase();
+		selection.timeline = timelinePanel.GetSelected();
+		return selection;
+	};
+
 	auto loadCurrentStage = [&](){
 		try{
 			stage = Editor::LoadStageDefinition(stagePanel.GetCurrentPath());
@@ -64,6 +74,7 @@ int main(){
 	ImGui_ImplOpenGL3_Init("#version 410");
 
 	bool dockLayoutInitialized = false;
+	bool resetLayoutRequested = false;
 
 	while(!window.ShouldClose()){
 		Engine::Time::Update();
@@ -75,6 +86,21 @@ int main(){
 		if(!dockLayoutInitialized){
 			Editor::SetupDefaultDockLayoutIfNeeded();
 			dockLayoutInitialized = true;
+		}
+		// deferred by a frame, since rebuilding has to happen before the dockspace is submitted
+		else if(resetLayoutRequested){
+			Editor::ResetDockLayout();
+			resetLayoutRequested = false;
+		}
+
+		if(ImGui::BeginMainMenuBar()){
+			if(ImGui::BeginMenu("View")){
+				if(ImGui::MenuItem("Reset Layout")){
+					resetLayoutRequested = true;
+				}
+				ImGui::EndMenu();
+			}
+			ImGui::EndMainMenuBar();
 		}
 
 		ImGui::DockSpaceOverViewport(Editor::GetMainDockspaceId(), ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
@@ -91,7 +117,7 @@ int main(){
 			hierarchyPanel.ClearSelection();
 		}
 
-		inspectorPanel.Draw("Inspector", stage, hierarchyPanel.IsPlayerSelected(), hierarchyPanel.GetSelected(), timelinePanel.GetSelected());
+		inspectorPanel.Draw("Inspector", stage, currentSelection());
 
 		ImGui::Begin("Play");
 		if(embeddedGame.IsPlaying()){
@@ -149,7 +175,7 @@ int main(){
 			// outline the play area, since the margin around it is only visible in the editor
 			ImGui::GetWindowDrawList()->AddRect(imageMin, imageMax, IM_COL32(255, 255, 255, 60));
 
-			Editor::SceneOverlayResult overlay = Editor::DrawSceneOverlay(stage, imageMin, scale, timelinePanel.GetSpawnVisibility(), hierarchyPanel.IsPlayerSelected(), hierarchyPanel.GetSelected(), timelinePanel.GetSelected());
+			Editor::SceneOverlayResult overlay = Editor::DrawSceneOverlay(stage, imageMin, scale, currentSelection(), timelinePanel.GetSceneViewOptions());
 			if(overlay.clickedTimelineIndex >= 0){
 				hierarchyPanel.ClearSelection();
 				timelinePanel.SetSelected(overlay.clickedTimelineIndex);

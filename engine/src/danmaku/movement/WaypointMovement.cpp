@@ -3,8 +3,8 @@
 
 namespace Engine {
 
-WaypointMovement::WaypointMovement(std::vector<Waypoint> waypoints, float speed):
-	waypoints(std::move(waypoints)), speed(speed)
+WaypointMovement::WaypointMovement(std::vector<Waypoint> waypoints, float speed, glm::vec2 origin):
+	waypoints(std::move(waypoints)), speed(speed), origin(origin)
 {
 }
 
@@ -18,7 +18,7 @@ void WaypointMovement::Update(float deltaTime, Transform& transform){
 		return;
 	}
 
-	glm::vec2 target = waypoints[currentWaypoint].position;
+	glm::vec2 target = origin + waypoints[currentWaypoint].offset;
 	glm::vec2 toTarget = target - transform.position;
 	float distance = glm::length(toTarget);
 

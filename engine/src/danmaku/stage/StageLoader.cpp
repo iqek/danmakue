@@ -30,7 +30,7 @@ glm::vec4 ParseColor(const Json& array){
 	return glm::vec4(array.at(0).get<float>(), array.at(1).get<float>(), array.at(2).get<float>(), array.at(3).get<float>());
 }
 
-std::unique_ptr<MovementPattern> CreateMovement(const Json& data){
+std::unique_ptr<MovementPattern> CreateMovement(const Json& data, const glm::vec2& spawnPosition){
 	std::string type = data.at("type").get<std::string>();
 
 	if(type == "linear"){
@@ -40,9 +40,11 @@ std::unique_ptr<MovementPattern> CreateMovement(const Json& data){
 	if(type == "waypoint"){
 		std::vector<Waypoint> waypoints;
 		for(const auto& point : data.at("waypoints")){
-			waypoints.push_back({ ParseVec2(point.at("position")), point.value("waitTime", 0.0f) });
+			// waypoints used to be absolute world points, so fold an old one back into an offset
+			glm::vec2 offset = point.contains("offset") ? ParseVec2(point.at("offset")) : ParseVec2(point.at("position")) - spawnPosition;
+			waypoints.push_back({ offset, point.value("waitTime", 0.0f) });
 		}
-		return std::make_unique<WaypointMovement>(waypoints, data.at("speed").get<float>());
+		return std::make_unique<WaypointMovement>(waypoints, data.at("speed").get<float>(), spawnPosition);
 	}
 
 	ENGINE_CORE_ERROR("Unknown movement type: {}", type);
@@ -76,15 +78,15 @@ std::unique_ptr<BulletEmitter> CreateEmitter(const Json& data){
 std::function<bool(entt::registry&, float)> CreateTrigger(const Json& data){
 	std::string type = data.at("type").get<std::string>();
 
-	if(type == "time"){
-		return TimeTrigger(data.at("seconds").get<float>());
+	if(type == "delay"){
+		return DelayTrigger(data.value("seconds", 0.0f));
 	}
 	if(type == "afterCleared"){
 		return AfterEnemiesCleared();
 	}
 
 	ENGINE_CORE_ERROR("Unknown trigger type: {}", type);
-	return TimeTrigger(0.0f);
+	return DelayTrigger(0.0f);
 }
 
 void SpawnEnemy(entt::registry& registry, const Json& enemyData, const glm::vec2& position){
@@ -102,7 +104,7 @@ void SpawnEnemy(entt::registry& registry, const Json& enemyData, const glm::vec2
 	enemy.maxHealth = enemy.health;
 
 	if(enemyData.contains("movement")){
-		enemy.movement = CreateMovement(enemyData.at("movement"));
+		enemy.movement = CreateMovement(enemyData.at("movement"), position);
 	}
 
 	for(const auto& emitterData : enemyData.at("emitters")){
