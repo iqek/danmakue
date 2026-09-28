@@ -222,23 +222,33 @@ entt::entity SpawnPlayer(entt::registry& registry, const std::string& path){
 	}
 
 	Json playerData = data.value("player", Json::object());
+	std::string assetsRoot = Utf8FromPath(PathFromUtf8(path).parent_path().parent_path());
 
 	glm::vec2 position = playerData.contains("position") ? ParseVec2(playerData.at("position")) : glm::vec2(640.0f, 360.0f);
 	glm::vec2 size = playerData.contains("size") ? ParseVec2(playerData.at("size")) : glm::vec2(80.0f, 80.0f);
-	glm::vec2 colliderSize = playerData.contains("colliderSize") ? ParseVec2(playerData.at("colliderSize")) : glm::vec2(30.0f, 30.0f);
-	glm::vec4 color = playerData.contains("color") ? ParseColor(playerData.at("color")) : glm::vec4(1.0f, 0.55f, 0.65f, 1.0f);
 
 	auto entity = registry.create();
 	registry.emplace<Transform>(entity, position, size);
-	registry.emplace<Sprite>(entity, color);
-	registry.emplace<Collider>(entity, colliderSize);
+
+	// like an enemy, the player only gets what its components actually list
+	if(const Json* sprite = FindComponent(playerData, "sprite")){
+		glm::vec4 color = sprite->contains("color") ? ParseColor(sprite->at("color")) : glm::vec4(1.0f);
+		std::string texture = sprite->value("texture", std::string());
+		registry.emplace<Sprite>(entity, color, texture.empty() ? nullptr : TextureLibrary::Get(assetsRoot + "/" + texture));
+	}
+
+	if(const Json* collider = FindComponent(playerData, "collider")){
+		registry.emplace<Collider>(entity, collider->contains("size") ? ParseVec2(collider->at("size")) : size);
+	}
 
 	Player player;
-	player.lives = playerData.value("lives", 3);
-	player.moveSpeed = playerData.value("moveSpeed", 300.0f);
+	if(const Json* settings = FindComponent(playerData, "player")){
+		player.lives = settings->value("lives", 3);
+		player.moveSpeed = settings->value("moveSpeed", 300.0f);
+	}
 
-	if(playerData.contains("weapons")){
-		for(const auto& weaponData : playerData.at("weapons")){
+	if(const Json* weapons = FindComponent(playerData, "weapons")){
+		for(const auto& weaponData : weapons->value("list", Json::array())){
 			try{
 				player.weapons.push_back(CreateEmitter(weaponData));
 			}
@@ -246,9 +256,6 @@ entt::entity SpawnPlayer(entt::registry& registry, const std::string& path){
 				ENGINE_CORE_ERROR("Failed to create player weapon: {}", e.what());
 			}
 		}
-	}
-	else{
-		player.weapons.push_back(std::make_unique<StraightShotEmitter>(glm::vec2(0.0f, -1.0f), 500.0f, 0.12f, color));
 	}
 
 	registry.emplace<Player>(entity, std::move(player));

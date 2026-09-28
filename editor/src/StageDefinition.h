@@ -27,15 +27,12 @@ struct TimelineEntry {
 	glm::vec2 position{ 0.0f, 0.0f };
 };
 
-// The stage's single player: spawn, stats, and starting weapons
+// The stage's single player: where it starts and what it is made of.
+// Size is intrinsic like the enemy's; everything else is an added component.
 struct PlayerDefinition {
 	glm::vec2 position{ 640.0f, 360.0f };
 	glm::vec2 size{ 80.0f, 80.0f };
-	glm::vec2 colliderSize{ 30.0f, 30.0f };
-	glm::vec4 color{ 1.0f, 0.55f, 0.65f, 1.0f };
-	int lives = 3;
-	float moveSpeed = 300.0f;
-	nlohmann::json weapons = nlohmann::json::array();
+	nlohmann::json components = nlohmann::json::array();
 };
 
 // An editor-side grouping label. The colour is what ties it together on the track.

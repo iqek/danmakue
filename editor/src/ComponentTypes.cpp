@@ -128,6 +128,26 @@ void DrawEmitters(Json& component){
 	DrawEmitterList(component["list"]);
 }
 
+void DrawPlayerSettings(Json& component){
+	int lives = component.value("lives", 3);
+	if(ImGui::DragInt("Lives", &lives, 1.0f, 1, 99)){
+		component["lives"] = lives;
+	}
+
+	float moveSpeed = component.value("moveSpeed", 300.0f);
+	if(ImGui::DragFloat("Move Speed", &moveSpeed, 1.0f, 0.0f, 2000.0f)){
+		SetFloat(component, "moveSpeed", moveSpeed);
+	}
+}
+
+void DrawWeapons(Json& component){
+	if(!component.contains("list") || !component.at("list").is_array()){
+		component["list"] = Json::array();
+	}
+	DrawEmitterList(component["list"]);
+	ImGui::TextDisabled("An empty list is allowed; the player simply cannot shoot");
+}
+
 Json SpriteDefault(){
 	return Json{ { "type", "sprite" }, { "color", Json::array({ 1.0, 1.0, 1.0, 1.0 }) } };
 }
@@ -149,15 +169,32 @@ Json EmittersDefault(){
 	return Json{ { "type", "emitters" }, { "list", Json::array() } };
 }
 
+Json PlayerSettingsDefault(){
+	return Json{ { "type", "player" }, { "lives", 3 }, { "moveSpeed", 300.0 } };
+}
+
+Json WeaponsDefault(){
+	// a plain forward shot, so a brand new player can already do something
+	return Json{ { "type", "weapons" }, { "list", Json::array({ Json{
+		{ "type", "straightShot" },
+		{ "direction", Json::array({ 0.0, -1.0 }) },
+		{ "bulletSpeed", 500.0 },
+		{ "interval", 0.12 },
+		{ "color", Json::array({ 1.0, 1.0, 1.0, 1.0 }) }
+	} }) } };
+}
+
 }
 
 const std::vector<ComponentType>& ComponentTypes(){
 	static const std::vector<ComponentType> types = {
-		{ "sprite", "Sprite", SpriteDefault, DrawSprite },
-		{ "collider", "Collider", ColliderDefault, DrawCollider },
-		{ "health", "Health", HealthDefault, DrawHealth },
-		{ "movement", "Movement", MovementDefault, DrawMovement },
-		{ "emitters", "Emitters", EmittersDefault, DrawEmitters },
+		{ "sprite", "Sprite", ComponentOwner::Both, SpriteDefault, DrawSprite },
+		{ "collider", "Collider", ComponentOwner::Both, ColliderDefault, DrawCollider },
+		{ "health", "Health", ComponentOwner::Enemy, HealthDefault, DrawHealth },
+		{ "movement", "Movement", ComponentOwner::Enemy, MovementDefault, DrawMovement },
+		{ "emitters", "Emitters", ComponentOwner::Enemy, EmittersDefault, DrawEmitters },
+		{ "player", "Player", ComponentOwner::Player, PlayerSettingsDefault, DrawPlayerSettings },
+		{ "weapons", "Weapons", ComponentOwner::Player, WeaponsDefault, DrawWeapons },
 	};
 	return types;
 }
@@ -171,12 +208,91 @@ const ComponentType* FindComponentType(const std::string& type){
 	return nullptr;
 }
 
-Json DefaultEnemyComponents(){
+bool ComponentAppliesTo(const ComponentType& type, ComponentOwner owner){
+	return type.owner == ComponentOwner::Both || type.owner == owner;
+}
+
+namespace {
+
+Json DefaultComponentsFor(ComponentOwner owner){
 	Json components = Json::array();
 	for(const auto& entry : ComponentTypes()){
-		components.push_back(entry.makeDefault());
+		if(ComponentAppliesTo(entry, owner)){
+			components.push_back(entry.makeDefault());
+		}
 	}
 	return components;
+}
+
+}
+
+Json DefaultEnemyComponents(){
+	return DefaultComponentsFor(ComponentOwner::Enemy);
+}
+
+Json DefaultPlayerComponents(){
+	return DefaultComponentsFor(ComponentOwner::Player);
+}
+
+void DrawComponentList(Json& components, ComponentOwner owner){
+	if(!components.is_array()){
+		components = Json::array();
+	}
+
+	int removeIndex = -1;
+	for(int i = 0; i < static_cast<int>(components.size()); i++){
+		Json& component = components[i];
+		std::string type = component.value("type", std::string());
+		const ComponentType* kind = FindComponentType(type);
+
+		ImGui::PushID(i);
+
+		// the header's close button is the remove, the way Unity does it
+		bool keep = true;
+		bool open = ImGui::CollapsingHeader(kind != nullptr ? kind->label : type.c_str(), &keep, ImGuiTreeNodeFlags_DefaultOpen);
+		if(!keep){
+			removeIndex = i;
+		}
+
+		if(open){
+			ImGui::Indent();
+			if(kind != nullptr){
+				kind->draw(component);
+			}
+			else{
+				ImGui::TextDisabled("This build does not know this component");
+			}
+			ImGui::Unindent();
+		}
+
+		ImGui::PopID();
+	}
+
+	if(removeIndex >= 0){
+		components.erase(components.begin() + removeIndex);
+	}
+
+	ImGui::Spacing();
+	if(ImGui::Button("Add Component")){
+		ImGui::OpenPopup("addComponent");
+	}
+
+	if(ImGui::BeginPopup("addComponent")){
+		bool anyLeft = false;
+		for(const auto& kind : ComponentTypes()){
+			if(!ComponentAppliesTo(kind, owner) || FindComponent(components, kind.type) != nullptr){
+				continue;
+			}
+			anyLeft = true;
+			if(ImGui::MenuItem(kind.label)){
+				components.push_back(kind.makeDefault());
+			}
+		}
+		if(!anyLeft){
+			ImGui::TextDisabled("Nothing left to add");
+		}
+		ImGui::EndPopup();
+	}
 }
 
 }

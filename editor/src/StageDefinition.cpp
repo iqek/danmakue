@@ -28,6 +28,31 @@ Json ToJsonArray(const glm::vec4& v){
 	return Json::array({ CleanFloat(v.x), CleanFloat(v.y), CleanFloat(v.z), CleanFloat(v.w) });
 }
 
+// the player used to be a fixed set of fields too, with these as its fallbacks
+Json MigratePlayerComponents(const Json& playerData){
+	Json components = Json::array();
+
+	components.push_back(Json{
+		{ "type", "sprite" },
+		{ "color", playerData.contains("color") ? playerData.at("color") : Json::array({ 1.0, 0.55, 0.65, 1.0 }) }
+	});
+
+	components.push_back(Json{
+		{ "type", "collider" },
+		{ "size", playerData.contains("colliderSize") ? playerData.at("colliderSize") : Json::array({ 30.0, 30.0 }) }
+	});
+
+	components.push_back(Json{
+		{ "type", "player" },
+		{ "lives", playerData.value("lives", 3) },
+		{ "moveSpeed", CleanFloat(playerData.value("moveSpeed", 300.0f)) }
+	});
+
+	components.push_back(Json{ { "type", "weapons" }, { "list", playerData.value("weapons", Json::array()) } });
+
+	return components;
+}
+
 // enemies used to be a fixed set of fields; fold an old one into the component list
 Json MigrateEnemyComponents(const Json& enemyData, const glm::vec2& size){
 	Json components = Json::array();
@@ -67,16 +92,11 @@ StageDefinition LoadStageDefinition(const std::string& utf8Path){
 
 	StageDefinition stage;
 
-	if(data.contains("player")){
-		const Json& playerData = data.at("player");
-		stage.player.position = playerData.contains("position") ? ParseVec2(playerData.at("position")) : stage.player.position;
-		stage.player.size = playerData.contains("size") ? ParseVec2(playerData.at("size")) : stage.player.size;
-		stage.player.colliderSize = playerData.contains("colliderSize") ? ParseVec2(playerData.at("colliderSize")) : stage.player.size;
-		stage.player.color = playerData.contains("color") ? ParseColor(playerData.at("color")) : stage.player.color;
-		stage.player.lives = playerData.value("lives", stage.player.lives);
-		stage.player.moveSpeed = playerData.value("moveSpeed", stage.player.moveSpeed);
-		stage.player.weapons = playerData.value("weapons", Json::array());
-	}
+	// a stage with no player at all still gets one, built from the same fallbacks
+	Json playerData = data.value("player", Json::object());
+	stage.player.position = playerData.contains("position") ? ParseVec2(playerData.at("position")) : stage.player.position;
+	stage.player.size = playerData.contains("size") ? ParseVec2(playerData.at("size")) : stage.player.size;
+	stage.player.components = playerData.contains("components") ? playerData.at("components") : MigratePlayerComponents(playerData);
 
 	if(data.contains("phases")){
 		for(const auto& phase : data.at("phases")){
@@ -161,11 +181,7 @@ void SaveStageDefinition(const StageDefinition& stage, const std::string& utf8Pa
 	Json playerData;
 	playerData["position"] = ToJsonArray(stage.player.position);
 	playerData["size"] = ToJsonArray(stage.player.size);
-	playerData["colliderSize"] = ToJsonArray(stage.player.colliderSize);
-	playerData["color"] = ToJsonArray(stage.player.color);
-	playerData["lives"] = stage.player.lives;
-	playerData["moveSpeed"] = CleanFloat(stage.player.moveSpeed);
-	playerData["weapons"] = stage.player.weapons;
+	playerData["components"] = stage.player.components;
 	data["player"] = playerData;
 
 	// optional keys are only written when actually set, so untouched stages

@@ -1,4 +1,5 @@
 #include "StagePanel.h"
+#include "ComponentTypes.h"
 
 #include "engine/core/Log.h"
 #include "engine/core/Utf8Path.h"
@@ -85,7 +86,10 @@ bool StagePanel::Draw(const char* title, StageDefinition& stage){
 			}
 			else{
 				try{
-					SaveStageDefinition(StageDefinition{}, path);
+					// empty of enemies, but the player still needs its own components
+					StageDefinition fresh;
+					fresh.player.components = DefaultPlayerComponents();
+					SaveStageDefinition(fresh, path);
 					ENGINE_INFO("Created stage: {}", path);
 					currentFileName = fileName;
 					newStageName.clear();
