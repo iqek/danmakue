@@ -17,9 +17,18 @@ struct Sprite {
 	std::shared_ptr<Texture> texture;
 };
 
-// An AABB hitbox, centered on the entity's Transform.position
+// A hitbox centered on the entity's Transform.position.
+// Danmaku wants circles: a box clips corners the player never sees coming.
 struct Collider {
+	enum class Shape {
+		Box,
+		Circle,
+	};
+
+	Shape shape = Shape::Box;
+	// size is what a box uses, radius is what a circle uses
 	glm::vec2 size{ 1.0f, 1.0f };
+	float radius = 0.5f;
 };
 
 }

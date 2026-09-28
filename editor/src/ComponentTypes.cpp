@@ -3,6 +3,7 @@
 #include "JsonFieldHelpers.h"
 #include "StageDefinition.h"
 
+#include <algorithm>
 #include <imgui.h>
 #include <imgui_stdlib.h>
 
@@ -47,11 +48,40 @@ void DrawSprite(Json& component){
 }
 
 void DrawCollider(Json& component){
+	std::string shape = component.value("shape", std::string("box"));
+
+	const char* shapeNames[] = { "box", "circle" };
+	int shapeIndex = (shape == "circle") ? 1 : 0;
+
+	// swapping shape carries the old size across, so the hitbox stays roughly as it was
+	if(ImGui::Combo("Shape", &shapeIndex, shapeNames, IM_ARRAYSIZE(shapeNames))){
+		if(shapeIndex == 1){
+			glm::vec2 size = GetVec2(component, "size", glm::vec2(32.0f));
+			component = Json{ { "type", "collider" }, { "shape", "circle" } };
+			SetFloat(component, "radius", std::max(size.x, size.y) * 0.5f);
+		}
+		else{
+			float radius = component.value("radius", 16.0f);
+			component = Json{ { "type", "collider" } };
+			SetVec2(component, "size", glm::vec2(radius * 2.0f));
+		}
+		return;
+	}
+
+	if(shape == "circle"){
+		float radius = component.value("radius", 16.0f);
+		if(ImGui::DragFloat("Radius", &radius, 0.5f, 0.5f, 2000.0f)){
+			SetFloat(component, "radius", std::max(0.5f, radius));
+		}
+		ImGui::TextDisabled("What danmaku wants: a box counts corners the player never sees");
+		return;
+	}
+
 	glm::vec2 size = GetVec2(component, "size", glm::vec2(32.0f));
 	if(ImGui::DragFloat2("Size", &size.x)){
 		SetVec2(component, "size", size);
 	}
-	ImGui::TextDisabled("The box that counts as a hit, centred on the enemy");
+	ImGui::TextDisabled("The box that counts as a hit, centred on the entity");
 }
 
 void DrawHealth(Json& component){
@@ -154,6 +184,12 @@ void DrawPlayerSettings(Json& component){
 	if(ImGui::DragFloat("Move Speed", &moveSpeed, 1.0f, 0.0f, 2000.0f)){
 		SetFloat(component, "moveSpeed", moveSpeed);
 	}
+
+	float invincible = component.value("invincibleSeconds", 1.5f);
+	if(ImGui::DragFloat("Invincible (s)", &invincible, 0.05f, 0.0f, 10.0f)){
+		SetFloat(component, "invincibleSeconds", std::max(0.0f, invincible));
+	}
+	ImGui::TextDisabled("How long a hit leaves the player safe and unable to be hit again");
 }
 
 void DrawWeapons(Json& component){
@@ -186,7 +222,7 @@ Json EmittersDefault(){
 }
 
 Json PlayerSettingsDefault(){
-	return Json{ { "type", "player" }, { "lives", 3 }, { "moveSpeed", 300.0 } };
+	return Json{ { "type", "player" }, { "lives", 3 }, { "moveSpeed", 300.0 }, { "invincibleSeconds", 1.5 } };
 }
 
 Json WeaponsDefault(){

@@ -47,7 +47,9 @@ int main(int argc, char** argv){
 	auto patchouliEntity = registry.create();
 	registry.emplace<Engine::Transform>(patchouliEntity, glm::vec2(150.0f, 150.0f), glm::vec2(128.0f, 128.0f));
 	registry.emplace<Engine::Sprite>(patchouliEntity, glm::vec4(1.0f), Engine::TextureLibrary::Get("assets/know.png"));
-	registry.emplace<Engine::Collider>(patchouliEntity, glm::vec2(110.0f, 110.0f));
+	Engine::Collider patchouliCollider;
+	patchouliCollider.size = glm::vec2(110.0f, 110.0f);
+	registry.emplace<Engine::Collider>(patchouliEntity, patchouliCollider);
 
 	Engine::Stage stage = Engine::LoadStage(stagePath);
 
@@ -99,10 +101,6 @@ int main(int argc, char** argv){
 			enemyBulletPool.Update(dt, transform.position);
 			playerBulletPool.Update(dt, transform.position);
 
-			auto& playerSprite = registry.get<Engine::Sprite>(player);
-			bool blinkOff = playerData.invincibleTimer > 0.0f && std::fmod(playerData.invincibleTimer, 0.2f) < 0.1f;
-			playerSprite.color.a = blinkOff ? 0.3f : 1.0f;
-
 			if(playerData.lives <= 0){
 				gameOver = true;
 				ENGINE_INFO("Game over. Final score: {}", playerData.score);
@@ -110,6 +108,7 @@ int main(int argc, char** argv){
 		}
 
 		renderer.Clear({ 0.1f, 0.1f, 0.15f, 1.0f });
+		Engine::ShowPlayerInvincibility(registry, player, renderer);
 		Engine::RenderSprites(registry, renderer);
 		enemyBulletPool.Draw(renderer);
 		playerBulletPool.Draw(renderer);

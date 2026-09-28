@@ -13,6 +13,7 @@
 #include "engine/core/Log.h"
 #include "engine/core/Utf8Path.h"
 
+#include <algorithm>
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include <unordered_map>
@@ -29,6 +30,20 @@ glm::vec2 ParseVec2(const Json& array){
 
 glm::vec4 ParseColor(const Json& array){
 	return glm::vec4(array.at(0).get<float>(), array.at(1).get<float>(), array.at(2).get<float>(), array.at(3).get<float>());
+}
+
+// a collider component, falling back to a box the size of the entity itself
+Collider ParseCollider(const Json& data, const glm::vec2& fallbackSize){
+	Collider collider;
+
+	if(data.value("shape", std::string("box")) == "circle"){
+		collider.shape = Collider::Shape::Circle;
+		collider.radius = data.value("radius", std::max(fallbackSize.x, fallbackSize.y) * 0.5f);
+		return collider;
+	}
+
+	collider.size = data.contains("size") ? ParseVec2(data.at("size")) : fallbackSize;
+	return collider;
 }
 
 std::unique_ptr<MovementPattern> CreateMovement(const Json& data, const glm::vec2& spawnPosition){
@@ -117,7 +132,7 @@ void SpawnEnemy(entt::registry& registry, const Json& enemyData, const glm::vec2
 	}
 
 	if(const Json* collider = FindComponent(enemyData, "collider")){
-		registry.emplace<Collider>(entity, collider->contains("size") ? ParseVec2(collider->at("size")) : size);
+		registry.emplace<Collider>(entity, ParseCollider(*collider, size));
 	}
 
 	Enemy enemy;
@@ -238,13 +253,14 @@ entt::entity SpawnPlayer(entt::registry& registry, const std::string& path){
 	}
 
 	if(const Json* collider = FindComponent(playerData, "collider")){
-		registry.emplace<Collider>(entity, collider->contains("size") ? ParseVec2(collider->at("size")) : size);
+		registry.emplace<Collider>(entity, ParseCollider(*collider, size));
 	}
 
 	Player player;
 	if(const Json* settings = FindComponent(playerData, "player")){
 		player.lives = settings->value("lives", 3);
 		player.moveSpeed = settings->value("moveSpeed", 300.0f);
+		player.invincibleDuration = settings->value("invincibleSeconds", 1.5f);
 	}
 
 	if(const Json* weapons = FindComponent(playerData, "weapons")){

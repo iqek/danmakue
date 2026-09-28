@@ -45,7 +45,8 @@ Json MigratePlayerComponents(const Json& playerData){
 	components.push_back(Json{
 		{ "type", "player" },
 		{ "lives", playerData.value("lives", 3) },
-		{ "moveSpeed", CleanFloat(playerData.value("moveSpeed", 300.0f)) }
+		{ "moveSpeed", CleanFloat(playerData.value("moveSpeed", 300.0f)) },
+		{ "invincibleSeconds", CleanFloat(playerData.value("invincibleSeconds", 1.5f)) }
 	});
 
 	components.push_back(Json{ { "type", "weapons" }, { "list", playerData.value("weapons", Json::array()) } });

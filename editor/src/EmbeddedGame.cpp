@@ -87,10 +87,6 @@ void EmbeddedGame::Update(float deltaTime, bool inputAllowed){
 	enemyBulletPool->Update(deltaTime, transform.position);
 	playerBulletPool->Update(deltaTime, transform.position);
 
-	auto& playerSprite = registry.get<Engine::Sprite>(player);
-	bool blinkOff = playerData.invincibleTimer > 0.0f && std::fmod(playerData.invincibleTimer, 0.2f) < 0.1f;
-	playerSprite.color.a = blinkOff ? 0.3f : 1.0f;
-
 	if(playerData.lives <= 0){
 		gameOver = true;
 		ENGINE_INFO("Game over. Final score: {}", playerData.score);
@@ -102,6 +98,7 @@ void EmbeddedGame::Render(){
 	renderer.Clear(glm::vec4(0.1f, 0.1f, 0.15f, 1.0f));
 
 	if(playing){
+		Engine::ShowPlayerInvincibility(registry, player, renderer);
 		Engine::RenderSprites(registry, renderer);
 		enemyBulletPool->Draw(renderer);
 		playerBulletPool->Draw(renderer);

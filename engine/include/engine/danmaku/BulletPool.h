@@ -6,6 +6,7 @@
 namespace Engine {
 
 class Renderer2D;
+struct Collider;
 
 struct Bullet {
 	glm::vec2 position{ 0.0f, 0.0f };
@@ -33,11 +34,11 @@ public:
 	void Update(float deltaTime, glm::vec2 targetPosition);
 	void Draw(const Renderer2D& renderer) const;
 
-	// Overlap test against active bullets; doesn't touch them
-	bool CheckCollision(glm::vec2 boxCenter, glm::vec2 boxSize) const;
+	// Overlap test against active bullets, which are always circles; doesn't touch them
+	bool CheckCollision(glm::vec2 center, const Collider& collider) const;
 
 	// Same overlap test, but deactivates every bullet that hits
-	bool ConsumeCollisions(glm::vec2 boxCenter, glm::vec2 boxSize);
+	bool ConsumeCollisions(glm::vec2 center, const Collider& collider);
 };
 
 }

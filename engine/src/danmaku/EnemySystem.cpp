@@ -40,7 +40,7 @@ void UpdateEnemyHealth(entt::registry& registry, BulletPool& playerBulletPool, i
 		auto& collider = view.get<Collider>(entity);
 		auto& enemy = view.get<Enemy>(entity);
 
-		if(playerBulletPool.ConsumeCollisions(transform.position, collider.size)){
+		if(playerBulletPool.ConsumeCollisions(transform.position, collider)){
 			enemy.health -= damagePerHit;
 			if(enemy.health <= 0){
 				toDestroy.push_back(entity);

@@ -12,6 +12,8 @@ struct Player {
 	int lives = 3;
 	int score = 0;
 	float invincibleTimer = 0.0f;
+	// how long a hit leaves the player intangible, so a stage can tune the cooldown
+	float invincibleDuration = 1.5f;
 	float moveSpeed = 300.0f;
 	std::vector<std::unique_ptr<BulletEmitter>> weapons;
 

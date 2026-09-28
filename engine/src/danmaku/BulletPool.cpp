@@ -1,5 +1,6 @@
 #include "engine/danmaku/BulletPool.h"
 #include "engine/render/Renderer2D.h"
+#include "engine/scene/CollisionSystem.h"
 
 namespace Engine {
 
@@ -73,20 +74,17 @@ void BulletPool::Draw(const Renderer2D& renderer) const{
 	}
 }
 
-bool BulletPool::CheckCollision(glm::vec2 boxCenter, glm::vec2 boxSize) const{
-	glm::vec2 boxMin = boxCenter - boxSize * 0.5f;
-	glm::vec2 boxMax = boxCenter + boxSize * 0.5f;
+bool BulletPool::CheckCollision(glm::vec2 center, const Collider& collider) const{
+	Collider bulletShape;
+	bulletShape.shape = Collider::Shape::Circle;
 
 	for(const auto& bullet : bullets){
 		if(!bullet.active){
 			continue;
 		}
 
-		glm::vec2 bulletMin = bullet.position - glm::vec2(bullet.radius);
-		glm::vec2 bulletMax = bullet.position + glm::vec2(bullet.radius);
-
-		bool overlap = boxMin.x < bulletMax.x && boxMax.x > bulletMin.x && boxMin.y < bulletMax.y && boxMax.y > bulletMin.y;
-		if(overlap){
+		bulletShape.radius = bullet.radius;
+		if(Overlaps(bullet.position, bulletShape, center, collider)){
 			return true;
 		}
 	}
@@ -94,9 +92,9 @@ bool BulletPool::CheckCollision(glm::vec2 boxCenter, glm::vec2 boxSize) const{
 	return false;
 }
 
-bool BulletPool::ConsumeCollisions(glm::vec2 boxCenter, glm::vec2 boxSize){
-	glm::vec2 boxMin = boxCenter - boxSize * 0.5f;
-	glm::vec2 boxMax = boxCenter + boxSize * 0.5f;
+bool BulletPool::ConsumeCollisions(glm::vec2 center, const Collider& collider){
+	Collider bulletShape;
+	bulletShape.shape = Collider::Shape::Circle;
 
 	bool hitAny = false;
 	for(auto& bullet : bullets){
@@ -104,11 +102,8 @@ bool BulletPool::ConsumeCollisions(glm::vec2 boxCenter, glm::vec2 boxSize){
 			continue;
 		}
 
-		glm::vec2 bulletMin = bullet.position - glm::vec2(bullet.radius);
-		glm::vec2 bulletMax = bullet.position + glm::vec2(bullet.radius);
-
-		bool overlap = boxMin.x < bulletMax.x && boxMax.x > bulletMin.x && boxMin.y < bulletMax.y && boxMax.y > bulletMin.y;
-		if(overlap){
+		bulletShape.radius = bullet.radius;
+		if(Overlaps(bullet.position, bulletShape, center, collider)){
 			bullet.active = false;
 			hitAny = true;
 		}
