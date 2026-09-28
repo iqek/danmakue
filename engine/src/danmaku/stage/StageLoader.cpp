@@ -8,6 +8,7 @@
 #include "engine/danmaku/emitters/StraightShotEmitter.h"
 #include "engine/danmaku/movement/LinearMovement.h"
 #include "engine/danmaku/movement/WaypointMovement.h"
+#include "engine/render/TextureLibrary.h"
 #include "engine/scene/Components.h"
 #include "engine/core/Log.h"
 #include "engine/core/Utf8Path.h"
@@ -89,26 +90,54 @@ std::function<bool(entt::registry&, float)> CreateTrigger(const Json& data){
 	return DelayTrigger(0.0f);
 }
 
-void SpawnEnemy(entt::registry& registry, const Json& enemyData, const glm::vec2& position){
+const Json* FindComponent(const Json& enemyData, const char* type){
+	if(!enemyData.contains("components") || !enemyData.at("components").is_array()){
+		return nullptr;
+	}
+	for(const auto& component : enemyData.at("components")){
+		if(component.value("type", std::string()) == type){
+			return &component;
+		}
+	}
+	return nullptr;
+}
+
+// An enemy only gets what its template actually lists, the way a component list should behave.
+// assetsRoot is what texture paths in the stage are relative to.
+void SpawnEnemy(entt::registry& registry, const Json& enemyData, const glm::vec2& position, const std::string& assetsRoot){
 	glm::vec2 size = ParseVec2(enemyData.at("size"));
-	glm::vec2 colliderSize = enemyData.contains("colliderSize") ? ParseVec2(enemyData.at("colliderSize")) : size;
-	glm::vec4 color = ParseColor(enemyData.at("color"));
 
 	auto entity = registry.create();
 	registry.emplace<Transform>(entity, position, size);
-	registry.emplace<Sprite>(entity, color);
-	registry.emplace<Collider>(entity, colliderSize);
 
-	Enemy enemy;
-	enemy.health = enemyData.value("health", 1);
-	enemy.maxHealth = enemy.health;
-
-	if(enemyData.contains("movement")){
-		enemy.movement = CreateMovement(enemyData.at("movement"), position);
+	if(const Json* sprite = FindComponent(enemyData, "sprite")){
+		glm::vec4 color = sprite->contains("color") ? ParseColor(sprite->at("color")) : glm::vec4(1.0f);
+		std::string texture = sprite->value("texture", std::string());
+		registry.emplace<Sprite>(entity, color, texture.empty() ? nullptr : TextureLibrary::Get(assetsRoot + "/" + texture));
 	}
 
-	for(const auto& emitterData : enemyData.at("emitters")){
-		enemy.emitters.push_back(CreateEmitter(emitterData));
+	if(const Json* collider = FindComponent(enemyData, "collider")){
+		registry.emplace<Collider>(entity, collider->contains("size") ? ParseVec2(collider->at("size")) : size);
+	}
+
+	Enemy enemy;
+	if(const Json* health = FindComponent(enemyData, "health")){
+		enemy.health = health->value("hp", 1);
+	}
+	enemy.maxHealth = enemy.health;
+
+	if(const Json* movement = FindComponent(enemyData, "movement")){
+		if(movement->contains("pattern")){
+			enemy.movement = CreateMovement(movement->at("pattern"), position);
+		}
+	}
+
+	if(const Json* emitters = FindComponent(enemyData, "emitters")){
+		if(emitters->contains("list")){
+			for(const auto& emitterData : emitters->at("list")){
+				enemy.emitters.push_back(CreateEmitter(emitterData));
+			}
+		}
 	}
 
 	registry.emplace<Enemy>(entity, std::move(enemy));
@@ -124,6 +153,10 @@ Stage LoadStage(const std::string& path){
 	}
 
 	Stage stage;
+
+	// a stage's texture paths are relative to the assets folder, which is the
+	// stages folder's parent - both the game and the editor pass a full path in
+	std::string assetsRoot = Utf8FromPath(PathFromUtf8(path).parent_path().parent_path());
 
 	try{
 		Json data;
@@ -149,9 +182,9 @@ Stage LoadStage(const std::string& path){
 
 			// enemyData is captured by value - it's a plain copyable json
 			// object, so this stays valid long after the file is closed.
-			auto spawn = [enemyData, position](entt::registry& registry){
+			auto spawn = [enemyData, position, assetsRoot](entt::registry& registry){
 				try{
-					SpawnEnemy(registry, enemyData, position);
+					SpawnEnemy(registry, enemyData, position, assetsRoot);
 				}
 				catch(const Json::exception& e){
 					ENGINE_CORE_ERROR("Failed to spawn enemy: {}", e.what());

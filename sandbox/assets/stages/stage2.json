@@ -1,79 +1,113 @@
 {
     "enemies": [
         {
-            "colliderSize": [
-                36.0,
-                36.0
-            ],
-            "color": [
-                1.0,
-                1.0,
-                1.0,
-                1.0
-            ],
-            "emitters": [
+            "components": [
                 {
-                    "bulletSpeed": 200.0,
                     "color": [
                         1.0,
                         1.0,
                         1.0,
                         1.0
                     ],
-                    "homingStrength": 0.0,
-                    "interval": 0.5,
-                    "type": "aimedShot"
+                    "type": "sprite"
+                },
+                {
+                    "size": [
+                        36.0,
+                        36.0
+                    ],
+                    "type": "collider"
+                },
+                {
+                    "hp": 1,
+                    "type": "health"
+                },
+                {
+                    "pattern": {
+                        "type": "linear",
+                        "velocity": [
+                            0.0,
+                            0.0
+                        ]
+                    },
+                    "type": "movement"
+                },
+                {
+                    "list": [
+                        {
+                            "bulletSpeed": 200.0,
+                            "color": [
+                                1.0,
+                                1.0,
+                                1.0,
+                                1.0
+                            ],
+                            "homingStrength": 0.0,
+                            "interval": 0.5,
+                            "type": "aimedShot"
+                        }
+                    ],
+                    "type": "emitters"
                 }
             ],
-            "health": 1,
             "id": "enemy0",
-            "movement": {
-                "type": "linear",
-                "velocity": [
-                    0.0,
-                    0.0
-                ]
-            },
             "size": [
                 40.0,
                 40.0
             ]
         },
         {
-            "colliderSize": [
-                36.0,
-                36.0
-            ],
-            "color": [
-                1.0,
-                1.0,
-                1.0,
-                1.0
-            ],
-            "emitters": [
+            "components": [
                 {
-                    "angularVelocity": 2.0,
-                    "arms": 1,
-                    "bulletSpeed": 120.0,
                     "color": [
                         1.0,
                         1.0,
                         1.0,
                         1.0
                     ],
-                    "spawnInterval": 0.05,
-                    "type": "spiral"
+                    "type": "sprite"
+                },
+                {
+                    "size": [
+                        36.0,
+                        36.0
+                    ],
+                    "type": "collider"
+                },
+                {
+                    "hp": 1,
+                    "type": "health"
+                },
+                {
+                    "pattern": {
+                        "type": "linear",
+                        "velocity": [
+                            0.0,
+                            0.0
+                        ]
+                    },
+                    "type": "movement"
+                },
+                {
+                    "list": [
+                        {
+                            "angularVelocity": 2.0,
+                            "arms": 1,
+                            "bulletSpeed": 120.0,
+                            "color": [
+                                1.0,
+                                1.0,
+                                1.0,
+                                1.0
+                            ],
+                            "spawnInterval": 0.05,
+                            "type": "spiral"
+                        }
+                    ],
+                    "type": "emitters"
                 }
             ],
-            "health": 1,
             "id": "enemy1",
-            "movement": {
-                "type": "linear",
-                "velocity": [
-                    0.0,
-                    0.0
-                ]
-            },
             "size": [
                 40.0,
                 40.0

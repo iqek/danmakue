@@ -1,137 +1,188 @@
 {
     "enemies": [
         {
-            "colliderSize": [
-                36.0,
-                36.0
-            ],
-            "color": [
-                0.804023,
-                0.773212,
-                0.848039,
-                1.0
-            ],
-            "emitters": [
+            "components": [
                 {
-                    "bulletSpeed": 200.0,
                     "color": [
-                        0.45098,
-                        0.09506,
-                        0.231147,
+                        0.804023,
+                        0.773212,
+                        0.848039,
                         1.0
                     ],
-                    "homingStrength": 0.0,
-                    "interval": 0.5,
-                    "type": "aimedShot"
+                    "type": "sprite"
+                },
+                {
+                    "size": [
+                        36.0,
+                        36.0
+                    ],
+                    "type": "collider"
+                },
+                {
+                    "hp": 50,
+                    "type": "health"
+                },
+                {
+                    "pattern": {
+                        "speed": 150,
+                        "type": "waypoint",
+                        "waypoints": [
+                            {
+                                "offset": [
+                                    214.989761,
+                                    -139.320602
+                                ],
+                                "waitTime": 2.0
+                            },
+                            {
+                                "offset": [
+                                    867.261047,
+                                    -60.04216
+                                ],
+                                "waitTime": 2.0
+                            },
+                            {
+                                "offset": [
+                                    114.989761,
+                                    248.981308
+                                ],
+                                "waitTime": 2.0
+                            }
+                        ]
+                    },
+                    "type": "movement"
+                },
+                {
+                    "list": [
+                        {
+                            "bulletSpeed": 200.0,
+                            "color": [
+                                0.45098,
+                                0.09506,
+                                0.231147,
+                                1.0
+                            ],
+                            "homingStrength": 0.0,
+                            "interval": 0.5,
+                            "type": "aimedShot"
+                        }
+                    ],
+                    "type": "emitters"
                 }
             ],
-            "health": 50,
             "id": "waypointBurst",
-            "movement": {
-                "speed": 150,
-                "type": "waypoint",
-                "waypoints": [
-                    {
-                        "offset": [
-                            214.989761,
-                            -139.320602
-                        ],
-                        "waitTime": 2.0
-                    },
-                    {
-                        "offset": [
-                            867.261047,
-                            -60.04216
-                        ],
-                        "waitTime": 2.0
-                    },
-                    {
-                        "offset": [
-                            114.989761,
-                            248.981308
-                        ],
-                        "waitTime": 2.0
-                    }
-                ]
-            },
             "size": [
                 40.0,
                 40.0
             ]
         },
         {
-            "colliderSize": [
-                36.0,
-                36.0
-            ],
-            "color": [
-                1.0,
-                0.85,
-                0.5,
-                1.0
-            ],
-            "emitters": [
+            "components": [
                 {
-                    "bulletSpeed": 200,
                     "color": [
                         1.0,
                         0.85,
                         0.5,
                         1.0
                     ],
-                    "homingStrength": 1.5,
-                    "interval": 0.6,
-                    "type": "aimedShot"
+                    "type": "sprite"
                 },
                 {
-                    "color": [
-                        1.0,
-                        0.65,
-                        0.85,
-                        1.0
+                    "size": [
+                        36.0,
+                        36.0
                     ],
-                    "maxSpeed": 180,
-                    "minSpeed": 60,
-                    "outwardAcceleration": 60.0,
-                    "spawnInterval": 0.05,
-                    "type": "randomScatter"
+                    "type": "collider"
+                },
+                {
+                    "hp": 50,
+                    "type": "health"
+                },
+                {
+                    "pattern": {
+                        "type": "linear",
+                        "velocity": [
+                            150,
+                            0
+                        ]
+                    },
+                    "type": "movement"
+                },
+                {
+                    "list": [
+                        {
+                            "bulletSpeed": 200,
+                            "color": [
+                                1.0,
+                                0.85,
+                                0.5,
+                                1.0
+                            ],
+                            "homingStrength": 1.5,
+                            "interval": 0.6,
+                            "type": "aimedShot"
+                        },
+                        {
+                            "color": [
+                                1.0,
+                                0.65,
+                                0.85,
+                                1.0
+                            ],
+                            "maxSpeed": 180,
+                            "minSpeed": 60,
+                            "outwardAcceleration": 60.0,
+                            "spawnInterval": 0.05,
+                            "type": "randomScatter"
+                        }
+                    ],
+                    "type": "emitters"
                 }
             ],
-            "health": 50,
             "id": "aimedDrifter",
-            "movement": {
-                "type": "linear",
-                "velocity": [
-                    150,
-                    0
-                ]
-            },
             "size": [
                 40.0,
                 40.0
             ]
         },
         {
-            "colliderSize": [
-                36.0,
-                36.0
+            "components": [
+                {
+                    "color": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                    ],
+                    "type": "sprite"
+                },
+                {
+                    "size": [
+                        36.0,
+                        36.0
+                    ],
+                    "type": "collider"
+                },
+                {
+                    "hp": 1,
+                    "type": "health"
+                },
+                {
+                    "pattern": {
+                        "type": "linear",
+                        "velocity": [
+                            0.0,
+                            0.0
+                        ]
+                    },
+                    "type": "movement"
+                },
+                {
+                    "list": [],
+                    "type": "emitters"
+                }
             ],
-            "color": [
-                1.0,
-                1.0,
-                1.0,
-                1.0
-            ],
-            "emitters": [],
-            "health": 1,
             "id": "marisa",
-            "movement": {
-                "type": "linear",
-                "velocity": [
-                    0.0,
-                    0.0
-                ]
-            },
             "phase": "mid",
             "size": [
                 40.0,

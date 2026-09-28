@@ -65,14 +65,15 @@ void DrawMarker(ImDrawList* drawList, const ImVec2& screen, ImU32 color, bool se
 
 // anchor is the spawn point the path hangs off, since waypoints are stored as offsets
 void DrawWaypoints(EnemyDefinition& enemy, const glm::vec2& anchor, ImU32 color, const ImVec2& imageMin, float scale, ImDrawList* drawList){
-	if(enemy.movement.value("type", std::string()) != "waypoint"){
+	nlohmann::json* pattern = FindMovementPattern(enemy);
+	if(pattern == nullptr || pattern->value("type", std::string()) != "waypoint"){
 		return;
 	}
-	if(!enemy.movement.contains("waypoints") || !enemy.movement.at("waypoints").is_array()){
+	if(!pattern->contains("waypoints") || !pattern->at("waypoints").is_array()){
 		return;
 	}
 
-	nlohmann::json& waypoints = enemy.movement["waypoints"];
+	nlohmann::json& waypoints = (*pattern)["waypoints"];
 
 	ImGui::PushID("waypoints");
 
@@ -115,10 +116,10 @@ void DrawWaypoints(EnemyDefinition& enemy, const glm::vec2& anchor, ImU32 color,
 	ImGui::PopID();
 
 	if(addAfter != -2){
-		InsertWaypointAfter(enemy.movement, addAfter);
+		InsertWaypointAfter(*pattern, addAfter);
 	}
 	if(removeAt >= 0){
-		RemoveWaypoint(enemy.movement, removeAt);
+		RemoveWaypoint(*pattern, removeAt);
 	}
 }
 
@@ -180,10 +181,11 @@ SceneOverlayResult DrawSceneOverlay(StageDefinition& stage, const ImVec2& imageM
 
 		if(ImGui::BeginPopupContextItem()){
 			int enemyIndex = FindEnemyIndex(stage, stage.timeline[i].spawnId);
-			bool followsPath = enemyIndex >= 0 && stage.enemies[enemyIndex].movement.value("type", std::string()) == "waypoint";
+			nlohmann::json* pattern = enemyIndex >= 0 ? FindMovementPattern(stage.enemies[enemyIndex]) : nullptr;
+			bool followsPath = pattern != nullptr && pattern->value("type", std::string()) == "waypoint";
 			// the way into an empty path, where there is no point to right click yet
 			if(ImGui::MenuItem("Add Waypoint", nullptr, false, followsPath)){
-				InsertWaypointAfter(stage.enemies[enemyIndex].movement, WaypointCount(stage.enemies[enemyIndex].movement) - 1);
+				InsertWaypointAfter(*pattern, WaypointCount(*pattern) - 1);
 			}
 			ImGui::EndPopup();
 		}
