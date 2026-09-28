@@ -144,50 +144,6 @@
                 40.0,
                 40.0
             ]
-        },
-        {
-            "components": [
-                {
-                    "color": [
-                        1.0,
-                        1.0,
-                        1.0,
-                        1.0
-                    ],
-                    "type": "sprite"
-                },
-                {
-                    "size": [
-                        36.0,
-                        36.0
-                    ],
-                    "type": "collider"
-                },
-                {
-                    "hp": 1,
-                    "type": "health"
-                },
-                {
-                    "pattern": {
-                        "type": "linear",
-                        "velocity": [
-                            0.0,
-                            0.0
-                        ]
-                    },
-                    "type": "movement"
-                },
-                {
-                    "list": [],
-                    "type": "emitters"
-                }
-            ],
-            "id": "marisa",
-            "phase": "mid",
-            "size": [
-                40.0,
-                40.0
-            ]
         }
     ],
     "phases": [
