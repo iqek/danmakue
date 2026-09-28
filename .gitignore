@@ -33,3 +33,7 @@ vcpkg_installed/
 # Other IDEs
 .idea/
 *.swp
+
+# Stages are content: stage1.json ships as the demo, anything else you make stays local
+/sandbox/assets/stages/*
+!/sandbox/assets/stages/stage1.json
