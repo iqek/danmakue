@@ -1,4 +1,5 @@
 #include "InspectorPanel.h"
+#include "ComponentTypes.h"
 #include "EmitterListEditor.h"
 #include "JsonFieldHelpers.h"
 
@@ -13,75 +14,6 @@ namespace Editor {
 namespace {
 
 using Json = nlohmann::json;
-
-void DrawMovementEditor(Json& movement){
-	std::string type = movement.value("type", std::string("linear"));
-
-	const char* typeNames[] = { "linear", "waypoint" };
-	int typeIndex = (type == "waypoint") ? 1 : 0;
-
-	if(ImGui::Combo("Type##movement", &typeIndex, typeNames, IM_ARRAYSIZE(typeNames))){
-		std::string newType = typeNames[typeIndex];
-		if(newType == "linear"){
-			movement = Json{ { "type", "linear" }, { "velocity", Json::array({ 0.0, 0.0 }) } };
-		}
-		else{
-			movement = Json{ { "type", "waypoint" }, { "speed", 100.0 }, { "waypoints", Json::array() } };
-		}
-		return;
-	}
-
-	if(type == "linear"){
-		glm::vec2 velocity = GetVec2(movement, "velocity", glm::vec2(0.0f));
-		if(ImGui::DragFloat2("Velocity", &velocity.x)){
-			SetVec2(movement, "velocity", velocity);
-		}
-	}
-	else if(type == "waypoint"){
-		float speed = movement.value("speed", 100.0f);
-		if(ImGui::DragFloat("Speed", &speed, 1.0f, 0.0f, 2000.0f)){
-			SetFloat(movement, "speed", speed);
-		}
-
-		ImGui::TextDisabled("Offsets are from the spawn point, so the path travels with it");
-
-		if(!movement.contains("waypoints") || !movement.at("waypoints").is_array()){
-			movement["waypoints"] = Json::array();
-		}
-		Json& waypoints = movement["waypoints"];
-
-		int removeIndex = -1;
-		for(int i = 0; i < static_cast<int>(waypoints.size()); i++){
-			ImGui::PushID(i);
-			Json& point = waypoints[i];
-
-			glm::vec2 offset = GetVec2(point, "offset", glm::vec2(0.0f));
-			if(ImGui::DragFloat2("Offset", &offset.x)){
-				SetVec2(point, "offset", offset);
-			}
-
-			float waitTime = point.value("waitTime", 0.0f);
-			if(ImGui::DragFloat("Wait Time", &waitTime, 0.1f, 0.0f, 60.0f)){
-				SetFloat(point, "waitTime", waitTime);
-			}
-
-			if(ImGui::Button("Remove Waypoint")){
-				removeIndex = i;
-			}
-
-			ImGui::Separator();
-			ImGui::PopID();
-		}
-
-		if(removeIndex >= 0){
-			RemoveWaypoint(movement, removeIndex);
-		}
-
-		if(ImGui::Button("Add Waypoint")){
-			InsertWaypointAfter(movement, WaypointCount(movement) - 1);
-		}
-	}
-}
 
 void DrawTriggerEditor(Json& trigger){
 	std::string type = trigger.value("type", std::string("delay"));
@@ -141,17 +73,64 @@ void DrawEnemyInspector(EnemyDefinition& enemy, const StageDefinition& stage){
 	ImGui::InputText("Id", &enemy.id);
 	DrawPhaseCombo(enemy.phase, stage);
 	ImGui::DragFloat2("Size", &enemy.size.x);
-	ImGui::DragFloat2("Collider Size", &enemy.colliderSize.x);
-	ImGui::ColorEdit4("Color", &enemy.color.x);
-	ImGui::DragInt("Health", &enemy.health, 1.0f, 1, 10000);
+	ImGui::TextDisabled("Size is always here; everything else is a component below");
 
 	ImGui::Spacing();
-	ImGui::SeparatorText("Movement");
-	DrawMovementEditor(enemy.movement);
+
+	int removeIndex = -1;
+	for(int i = 0; i < static_cast<int>(enemy.components.size()); i++){
+		Json& component = enemy.components[i];
+		std::string type = component.value("type", std::string());
+		const ComponentType* kind = FindComponentType(type);
+
+		ImGui::PushID(i);
+
+		// the header's close button is the remove, the way Unity does it
+		bool keep = true;
+		bool open = ImGui::CollapsingHeader(kind != nullptr ? kind->label : type.c_str(), &keep, ImGuiTreeNodeFlags_DefaultOpen);
+		if(!keep){
+			removeIndex = i;
+		}
+
+		if(open){
+			ImGui::Indent();
+			if(kind != nullptr){
+				kind->draw(component);
+			}
+			else{
+				ImGui::TextDisabled("This build does not know this component");
+			}
+			ImGui::Unindent();
+		}
+
+		ImGui::PopID();
+	}
+
+	if(removeIndex >= 0){
+		enemy.components.erase(enemy.components.begin() + removeIndex);
+	}
 
 	ImGui::Spacing();
-	ImGui::SeparatorText("Emitters");
-	DrawEmitterList(enemy.emitters);
+	if(ImGui::Button("Add Component")){
+		ImGui::OpenPopup("addComponent");
+	}
+
+	if(ImGui::BeginPopup("addComponent")){
+		bool anyLeft = false;
+		for(const auto& kind : ComponentTypes()){
+			if(FindComponent(enemy.components, kind.type) != nullptr){
+				continue;
+			}
+			anyLeft = true;
+			if(ImGui::MenuItem(kind.label)){
+				enemy.components.push_back(kind.makeDefault());
+			}
+		}
+		if(!anyLeft){
+			ImGui::TextDisabled("Nothing left to add");
+		}
+		ImGui::EndPopup();
+	}
 }
 
 void DrawTimelineInspector(TimelineEntry& entry, const StageDefinition& stage){

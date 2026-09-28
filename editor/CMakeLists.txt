@@ -3,6 +3,7 @@ add_executable(editor
 	src/LogPanel.cpp
 	src/LogSink.cpp
 	src/AssetBrowserPanel.cpp
+	src/ComponentTypes.cpp
 	src/DefaultLayout.cpp
 	src/EmbeddedGame.cpp
 	src/EmitterListEditor.cpp

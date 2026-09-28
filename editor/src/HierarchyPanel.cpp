@@ -1,4 +1,5 @@
 #include "HierarchyPanel.h"
+#include "ComponentTypes.h"
 
 #include "engine/core/Log.h"
 
@@ -261,8 +262,7 @@ bool HierarchyPanel::Draw(const char* title, StageDefinition& stage){
 	if(newEnemyPhase != -2){
 		EnemyDefinition enemy;
 		enemy.id = GenerateUniqueEnemyId(stage);
-		// a zero-velocity default keeps the JSON valid, so a fresh enemy can already spawn
-		enemy.movement = nlohmann::json{ { "type", "linear" }, { "velocity", nlohmann::json::array({ 0.0, 0.0 }) } };
+		enemy.components = DefaultEnemyComponents();
 		if(newEnemyPhase >= 0 && newEnemyPhase < static_cast<int>(stage.phases.size())){
 			enemy.phase = stage.phases[newEnemyPhase].name;
 		}
