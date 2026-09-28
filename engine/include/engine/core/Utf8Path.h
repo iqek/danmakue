@@ -16,4 +16,10 @@ inline std::string Utf8FromPath(const std::filesystem::path& path){
 	return std::string(reinterpret_cast<const char*>(u8.data()), u8.size());
 }
 
+// Same again with forward slashes, for paths written into data files that have to travel
+inline std::string Utf8FromGenericPath(const std::filesystem::path& path){
+	std::u8string u8 = path.generic_u8string();
+	return std::string(reinterpret_cast<const char*>(u8.data()), u8.size());
+}
+
 }

@@ -19,7 +19,7 @@ void DrawSprite(Json& component){
 	}
 
 	std::string texture = component.value("texture", std::string());
-	if(ImGui::InputTextWithHint("Texture", "know.png", &texture)){
+	if(ImGui::InputTextWithHint("Texture", "drag an image here", &texture)){
 		if(texture.empty()){
 			component.erase("texture");
 		}
@@ -27,7 +27,23 @@ void DrawSprite(Json& component){
 			component["texture"] = texture;
 		}
 	}
-	ImGui::TextDisabled("Path inside the assets folder; leave it blank for a plain colour");
+
+	// the field takes drops straight from the Assets panel, so the path is never typed wrong
+	if(ImGui::BeginDragDropTarget()){
+		if(const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET_TEXTURE")){
+			component["texture"] = static_cast<const char*>(payload->Data);
+		}
+		ImGui::EndDragDropTarget();
+	}
+
+	if(component.contains("texture")){
+		ImGui::SameLine();
+		if(ImGui::SmallButton("Clear")){
+			component.erase("texture");
+		}
+	}
+
+	ImGui::TextDisabled("Drag one from Assets, or type a path inside the assets folder");
 }
 
 void DrawCollider(Json& component){
